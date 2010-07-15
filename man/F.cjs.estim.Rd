@@ -105,7 +105,7 @@ F.cjs.estim(capture, survival, histories, cap.init, sur.init, group,
     inverse \code{p = 1 / (1 + exp(-eta))}.  The "sine" link is \code{ eta = 20*asin( 2*p - 1 ) / pi }, which ranges from -10 to 10. 
     The inverse "sine" link is \code{p = 0.5*(1 + sin( eta*pi/20 ))} for values of \code{eta} between 
     -10 and 10.  For values of \code{eta < -10, p = 0}.  For values of  \code{eta > 10, p = 1}.
-    The "hazard" link is \code{eta = log( -log( 1 - p ))}, with inverse \code{1 - exp( -exp( eta ))}.
+    The "hazard" link is \code{eta = log( -log( 1 - p ))}, with inverse \code{1 - exp( -exp( eta ))}.}
   \item{control}{A list containing named control parameters for the minimization and estimation process. 
     Control parameters include number of iterations, covariance estimation method, etc.  
     Although the default values work in the vast majority of cases, changes to these 
