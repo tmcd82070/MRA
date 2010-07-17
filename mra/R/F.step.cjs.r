@@ -119,7 +119,7 @@ while( TRUE ){
     
     #   At this point, a1 is the new best model, added.cov is the new covariate added, cur.min is the new minimum fit statistic, mod = model that we added to
 
-    #   Check whether step added or subtracted a covariate, if not quit here
+    #   Check whether step added a covariate, if not quit here
     if( !step.advanced ){
         cat(paste("\nMinimum", fit.crit, "model found.\n"))
         break
