@@ -316,7 +316,8 @@ McDonald, T. L., and S. C. Amstrup. 2001. Estimation of population size using
 
 \examples{
 
-\donttest{
+%\donttest{
+
 ## Fit CJS model to dipper data, time-varying capture and survivals.
 ## Method 1 : using factors
 data(dipper.histories)
@@ -341,7 +342,7 @@ x3.a[,ncol(dipper.histories)] <- 999
 dipper.cjs2 <- F.cjs.estim( ~x3+x4+x5+x6+x7, ~x2+x3.a+x4+x5, dipper.histories )
 # compare dipper.cjs2 to dipper.cjs
 
-}
+%}
 
 }
 
