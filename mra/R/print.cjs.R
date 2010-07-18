@@ -30,6 +30,7 @@ cat(paste( format( c(" Capture var", names(cap.coef))),
 	"\n", sep="  "))
 
 cat(paste("\nMessage =", x$message[2] ))
+cat(paste("\nLink =", x$aux$link ))
 cat(paste("\nModel df = ", x$df))
 cat(paste("\nStd Errors and QAIC adjusted for C_hat = ", round(x$vif,6), "on", x$vif.df, "df"))
 cat(paste("\nLog likelihood = ", x$loglike))

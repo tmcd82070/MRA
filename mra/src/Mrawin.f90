@@ -307,8 +307,8 @@ module constants
 
     integer, parameter :: HL_nbins = 10 !number of bins for Hos-Lem statistic
 
-    double precision, parameter :: pi_mult = 15.0D0   ! Applies to sine link only.  Change this to give sine link more range. 
-                                                     ! Sine link is 0 when x less than this number.  Sine link is 1 when x greater than this number.
+    double precision, parameter :: pi_mult = 100.0D0   ! Applies to sine link only.  Change this to give sine link more range. 
+                                                       ! Sine link is 0 when x less than this number.  Sine link is 1 when x greater than this number.
 
 end module
 
@@ -1795,8 +1795,8 @@ subroutine procap(pij, i, j, coef, nx)
     end if
     
 
-!    if( i == 1 ) then
-!        write(logfile,*) "  Cap", i, j, ":", (ptr_capX(i,j,k), k=1,nx), "p=", pij
+!    if( i <= 2 ) then
+!        write(logfile,*) "  Cap", i, j, ":", (coef(k), "*", ptr_capX(i,j,k), " + ", k=1,nx), "p=", pij
 !    end if
 
 end subroutine
@@ -1991,7 +1991,7 @@ real function hazard_link( eta )
     z=min(eta,max_e_able)
     z=max(z,-max_e_able)
 
-    hazard_link = 1.0D0 - exp( -exp( z ))
+    hazard_link = 1.0D0 - exp( -exp( z/20.0D0 ))
 
 end function
 

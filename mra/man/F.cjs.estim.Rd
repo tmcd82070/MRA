@@ -16,10 +16,8 @@
 	to external covariates.  
 }
 \usage{
-F.cjs.estim(capture, survival, histories, cap.init, sur.init, group,  
-	nhat.v.meth = 1, c.hat = -1, df = NA,
-	intervals=rep(1,ncol(histories)-1), conf=0.95, link="logit", 
-    control=mra.control())
+F.cjs.estim(capture, survival, histories, cap.init, sur.init, group,  nhat.v.meth = 1, 
+c.hat = -1, df = NA, intervals=rep(1,ncol(histories)-1), conf=0.95, link="logit", control=mra.control())
 }
 
 %- maybe also 'usage' for other objects documented here.
@@ -108,11 +106,18 @@ F.cjs.estim(capture, survival, histories, cap.init, sur.init, group,
     of population size. Default 95\% confidence.}
   \item{link}{The link function to be used.  The link function converts linear predictors in the 
     range (-infinity, infinity) to probabilities in the range (0,1).  Valid values for the link 
-    function are "logit" (default), "sine", and "hazard".  The "logit" link is \code{ eta = log( p / 1 - p )}, with 
-    inverse \code{p = 1 / (1 + exp(-eta))}.  The "sine" link is \code{ eta = 20*asin( 2*p - 1 ) / pi }, which ranges from -10 to 10. 
-    The inverse "sine" link is \code{p = 0.5*(1 + sin( eta*pi/20 ))} for values of \code{eta} between 
-    -10 and 10.  For values of \code{eta < -10, p = 0}.  For values of  \code{eta > 10, p = 1}.
-    The "hazard" link is \code{eta = log( -log( 1 - p ))}, with inverse \code{1 - exp( -exp( eta ))}.}
+    function are "logit" (default), "sine", and "hazard".  
+     \itemize{
+        \item The "logit" link is \eqn{\eta = log( \frac{p}{1 - p} )}{eta = log( p / (1 - p) )} with 
+            inverse \eqn{p = \frac{1}{1 + exp(-\eta)}}{p = 1 / (1 + exp(-eta))}.  
+        \item The "sine" link is \eqn{\eta = \frac{100asin( 2p - 1 )}{\pi}}{eta = 100*asin( 2*p - 1 ) / pi }, which ranges from -100 to 100. 
+            The inverse "sine" link is \eqn{p = \frac{1 + sin( \eta\pi/100 )}{2}}{p = 0.5*(1 + sin( eta*pi/100 ))} for 
+            values of \eqn{\eta}{eta} between 
+            -100 and 100.  For values of \eqn{\eta}{eta} < -100, \eqn{p} = 0.  For values of  \eqn{\eta}{eta} > 100, \eqn{p} = 1.
+        \item The "hazard" link is \eqn{\eta = 20log( -log( 1 - p ))}{eta = 20*log( -log( 1 - p ))}, with inverse 
+        \eqn{1 - exp( -exp( \frac{\eta}{20} ))}{1 - exp( -exp( eta/20 ))}.
+     }
+    } 
   \item{control}{A list containing named control parameters for the minimization and estimation process. 
     Control parameters include number of iterations, covariance estimation method, etc.  
     Although the default values work in the vast majority of cases, changes to these 
@@ -195,6 +200,15 @@ F.cjs.estim(capture, survival, histories, cap.init, sur.init, group,
     
 
 }
+
+\note{MARK Users:  Due to differences in the way MRA and MARK parameterize the sine link, \emph{coefficient} 
+    estimates will differ between the two packages when this link is used to fit the same model in both packages.  
+    The fit (measured by deviance, AIC, etc.) will agree between the two packages.  Capture and survival probability
+    estimates will also agree between the two packages.  
+    
+    MARK does not contain a hazard rate link function. 
+}
+
 
 \value{An object (list) of class c("cjs","cr") with many components.  Use \code{print.cr} to print 
 	it nicely. Use \code{names(fit)}, where the call was \code{fit <- F.cr.estim(...)}, 

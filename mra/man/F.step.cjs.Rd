@@ -71,16 +71,26 @@ include and exclude \code{sex} as a single covariate with 1
 estimated coefficient and \code{ageclass1 + ageclass2 + 
 ageclass3} as a set of 3 covariates (with 3 estimated 
 coefficients) to be included and excluded as a set.  This is 
-useful if factor covariates are coded as indicator variables, 
-or to always include main effects with interactions.  In the 
+useful if factor covariates are pre-coded as indicator variables. In the 
 example above, specifying \code{ageclass1 + ageclass2 + 
 ageclass3} would make sense if age of an individual was 
 classified into 1 of 4 classes, and \code{ageclassX} was a 
 matrix with elements equal to 1 if the individual was in age 
-class X, and 0 otherwise.  Specifying something like \code{a + 
-b + ab} would ensure that the main effect matrices (\code{a} 
+class X during a capture occasion, and 0 otherwise.  
+
+Specifying a term like \code{a + 
+b + ab} would ensure that main effect matrices (\code{a} 
 and \code{b}) are included whenever the interaction matrix 
-(\code{ab}) is included during model selection. 
+(\code{ab}) is included during model selection. However, this way 
+of including interactions will only be useful if the main effects 
+are not considered separately.  That is, specifying 
+\code{cap.covars = c("a", "b", "a + b + ab")} will not work 
+because the routine does not know that "a" and "b" are 
+components of "a + b + ab".  Nonsense models like 
+"a + b + ab + a + b" could result. Thus, this routine is 
+likely only useful for terms that do not include interactions. 
+A useful way to proceed in this case may be to use stepwise 
+to select a model of main effects, then consider interactions.  
 
 Time varying and individual varying variables can be specified 
 using the \code{tvar} and \code{ivar} functions in the elements 
@@ -134,7 +144,7 @@ nan <- nrow(ch)
 small.t <- as.factor( paste("T",1:ns, sep=""))
 post.flood <- as.numeric( 1:ns >= 4 )
 year <- 1:ns - (ns / 2)
-males.postflood <- males %*% post.flood   # an interaction term
+males.postflood <- males %*% post.flood   # individual and time varying
 
 #   Attach attributes to covariates.  For convienence only.
 attr(small.t, "nan") <- nan
@@ -145,10 +155,12 @@ attr(males, "ns") <- ns
 
 #   Define pool of variables to be considered in each model
 cap.vars <- c("tvar(small.t)","tvar(year)")
-surv.vars <- c("tvar(small.t)","tvar(year)", "tvar(post.flood)", "ivar(males)", "tvar(post.flood) + ivar(males) + males.postflood")
+surv.vars <- c("tvar(small.t)","tvar(year)", "tvar(post.flood)", "ivar(males)", "males.postflood")
 
+\donttest{
 #   Do stepwise selection
-final.fit <- F.step.cjs( cap.vars, surv.vars, histories=ch )
+final.fit <- F.step.cjs( cap.vars, surv.vars, histories=ch, control=mra.control(maxfn=500, cov.meth=2) )
+}
 
 }
 
