@@ -338,11 +338,16 @@ class(ans) <- c("cjs", "cr")
 
 
 
-#   Compute fitted and residual components
-ans$fitted <- predict( ans )
-ans$residuals <- residuals( ans, type="pearson" )  
-ans$resid.type <- "pearson"
-
+#   Compute fitted and residual components, if converged
+if( ans$exit.code == 1 ){
+    ans$fitted <- predict( ans )
+    ans$residuals <- residuals( ans, type="pearson" )  
+    ans$resid.type <- "pearson"
+} else {
+    ans$fitted <- NA
+    ans$residuals <- NA  
+    ans$resid.type <- NA
+}
 
 if( control$trace ){
     if( ex.time < 0.01666667 ){

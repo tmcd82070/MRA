@@ -213,16 +213,25 @@ c.hat = -1, df = NA, intervals=rep(1,ncol(histories)-1), conf=0.95, link="logit"
 \value{An object (list) of class c("cjs","cr") with many components.  Use \code{print.cr} to print 
 	it nicely. Use \code{names(fit)}, where the call was \code{fit <- F.cr.estim(...)}, 
 	to see names of all returned components. To see values of individual components, 
-	issue commands like fit\$s.hat, fit\$se.s.hat, fit\$n.hat, etc. 
+	issue commands like fit$s.hat, fit$se.s.hat, fit$n.hat, etc. 
 
  	Components of the returned object are as follows:
   \item{histories}{The input capture history matrix.}
-  \item{aux}{Auxiliary information, mostly stored input values. This is a list containing:
-	\$call, \$nan=number of animals, \$ns=number of samples, \$nx=number of coefficients 
-	in capture model, \$ny=number of coefficients in survival model, \$cov.name=names 
-	of coefficients, \$ic.name=name of capture history matrix, \$mra.version=
-	version number of this package, \$R.version=R version used for estimation,
-	\$run.date=date the model was estimated.}
+  \item{aux}{Auxiliary information about the fit, mostly stored input values. This is a list containing 
+    the following components:
+    \itemize{
+        \item call = original call
+        \item nan = number of animals
+        \item ns = number of samples = number of capture occasions
+        \item nx = number of coefficients in capture model
+        \item ny = number of coefficients in survival model
+        \item cov.name = names of all coefficients
+        \item ic.name = name of capture history matrix. 
+        \item mra.version =	version number of MRA package used to estimate the model
+        \item R.version = R version used for during estimation
+        \item run.date = date the model was estimated.
+    }
+  }  
   \item{loglik}{Maximized CJS likelihood value for the model}
   \item{deviance}{Model deviance = -2*\code{loglik}.  This is relative deviance, see help for 
 	\code{F.sat.lik}.}
@@ -265,7 +274,16 @@ c.hat = -1, df = NA, intervals=rep(1,ncol(histories)-1), conf=0.95, link="logit"
     The messages interpret, in this order, the codes for (1) maximization algorithm used, 
     (2) exit code from the maximization algorithm (interprets \code{exit.code}), and 
     (3) covariance matrix code (interprets \code{cov.code}). }
-  \item{exit.code}{Exit code from the maximization routine.  Interpretation for \code{exit.code} is in \code{message}.}
+  \item{exit.code}{Exit code from the maximization routine.  Interpretation for \code{exit.code} is in \code{message}.
+    Exit codes are as follows: 
+    \itemize{
+        \item exit.code = 0: FAILURE: Initial Hessian not positive definite.
+        \item exit.code = 1: SUCCESS: Convergence criterion met.
+        \item exit.code = 2: FAILURE: G'dX > 0, rounding error.
+        \item exit.code = 3: FAILURE: Likelihood evaluated too many times.
+        \item exit.code =-1: FAILURE: Unknown optimization algorithm."
+    }      
+  }
   \item{cov.code}{A code indicating the method used to compute the covariance matrix.}
   \item{fn.evals}{The number of times the likelihood was evaluated prior to exit from the minimization routine. 
     If \code{exit.code} = 3, \code{fn.evals} equals the maximum set in \code{mra.control}.  This, in combination 

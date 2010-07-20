@@ -1,7 +1,7 @@
 Package: mra
 Type: Package
 Title: Analysis of Mark-Recapture data
-Version: 2.5
+Version: 2.6
 Date: 2010-07-18
 Author: Trent McDonald
 Maintainer: Trent McDonald <tmcdonald@west-inc.com>
