@@ -1,144 +1,236 @@
-F.cr.model.avg <- function( fits=ls(pat="^fit"), what="survival", fit.stat="qaicc" ){
-#
-#	Perform model averaging on a list of capture-recapture models.
-#
-#	Input:
-#	fits = vector listing the names of fitted objects to be included in the averaging.  E.g., 
-#		c("fit1","fit2","fit3"), or ls(pat="fit"). All these fitted objects, of type "cr", 
-#		are assumed to reside in the 1st search position.
-#	what = the statistic to model average.  Choices are "survival", "capture", "n.hat", and "beta"
-#	fit.stat = fit statistic that should be used to compute weights.  I.e., if fit.stat = "aic", 
-#		then all models in list are ordered by AIC, and weights are based on delta AIC values.
-#		Valid values are any fit statistic available in the fitted CR object (i.e., aic, aicc, 
-#		qaic, or qaicc )
-#
-#	Output: 
-#	A "cr" object with model averaged estimates, conditional (on model selection) variances, and 
-#	unconditional variances.  This object is suitable for plotting with plot.cr.
-#	
-#	Details: 
-#	Original routine by Eric Regehr. 
-#
- 
- 
-#	Get all the statistics from the fitted objects
-stats <- se.stats <- all.fit.stat <- good.fits <- NULL
 
-for( f in fits ){
-	fit <- get( f, pos=.GlobalEnv )	
-	if( (fit$exit.code != 1) | (fit$cov.code != 0) | (fit$df == 0) ) next
+F.cr.model.avg <- function(fits = ls(pattern = "^fit"), what = "survival",
+                              fit.stat = "qaicc") 
+{
 
-	if( substring(what,1,1) == "s" ){
-		nan      <- nrow(fit$s.hat)
-		ns       <- ncol(fit$s.hat)
-		stats    <- rbind( stats, c(fit$s.hat) )
-		se.stats <- rbind( se.stats, c(fit$se.s.hat) )
-	} else if( substring(what, 1,1) == "c" ){
-		nan      <- nrow(fit$p.hat)
-		ns       <- ncol(fit$p.hat)
-		stats    <- rbind( stats, c(fit$p.hat) )
-		se.stats <- rbind( se.stats, c(fit$se.p.hat) )
-	} else if( substring(what, 1,1) == "n" ){
-		stats    <- rbind( stats, c(fit$n.hat) )
-		se.stats <- rbind( se.stats, c(fit$se.n.hat) )
-	} else {
-        stop(paste("Invalid option. Cannot model average '", what, "'", sep=""))
-	}
+# F.cr.model.avg.JB.R
+# Perform model averaging on a list of capture-recapture models.
+# Code modified by Jeff Bromaghin on 7 August 2012 to reduce memory overhead.
 
 
 
-	all.fit.stat <- rbind( all.fit.stat, fit[[fit.stat]] )
-	good.fits <- c(good.fits, f)
+# Check value of what.
+if(substring(what, 1, 1) == "s")
+  {
+  x.name <- "s.hat"
+  x.se <- "se.s.hat"
+  want.n.hat <- FALSE
+  } else if(substring(what, 1, 1) == "c")
+  {
+  x.name <- "p.hat"
+  x.se <- "se.p.hat"
+  want.n.hat <- FALSE
+  } else if(substring(what, 1, 1) == "n")
+  {
+  x.name <- "n.hat"
+  x.se <- "se.n.hat"
+  want.n.hat <- TRUE
+  } else
+  {
+  stop(paste("Invalid option. Cannot model average '", what, "'.", sep = ""))
+  }
 
-}
-
-# 	At this point, all.fit.stat is a matrix size length(list) X length(statistics vector) containing 
-#	the statistics to average.  Average over rows, using weights. 
-
-#	Calculate AIC weights (Burnam and Anderson 2002 page XX.):	
-delta.AIC <- all.fit.stat - min( all.fit.stat, na.rm = TRUE )
-wi.array <- exp( -0.5 * delta.AIC ) / sum( exp( -0.5 * delta.AIC ), na.rm = TRUE )
 
 
-#	Calculate the model averaged real parameters and standard errors (Burnham and Anderson 2002 pages 150 and 162):
-#	Note the automatic replication of w.array across columns.  stats is n x m, w.array is  n x 1
-wi.array <- matrix( rep(wi.array, ncol(stats)), nrow(stats))
-a1 <- stats * wi.array
-theta.average <- apply( a1, 2, sum, na.rm = TRUE )
+# Check value of fit.stat
+if( !(fit.stat == "aicc") & !(fit.stat == "qaicc"))
+  {
+  stop(paste("Invalid option. Cannot model average '", fit.stat, "'.",
+             sep = ""))
+  }
 
+
+
+# Go through the model list once to determine how many models will be used in
+# model averaging.  Also record nan and ns from each model to make sure they are
+# all equal.
+n.mod <- length(fits)
+use.mod <- vector("logical", n.mod)
+nan.mod <- vector("numeric", n.mod)
+ns.mod <- vector("numeric", n.mod)
+for(li1 in 1:n.mod)
+  {
+  
+  # Retrieve model from memory.
+  fit <- get(fits[li1], pos = .GlobalEnv)
+  
+  # Should this model be used?
+  if("cr" %in% class(fit))
+    {
+    if((fit$exit.code == 1) & (fit$cov.code == 0) & (fit$df > 0))
+      {
+      use.mod[li1] <- TRUE
+      nan.mod[li1] <- fit$aux$nan
+      ns.mod[li1] <- fit$aux$ns
+      } else
+        {
+        use.mod[li1] <- FALSE
+        nan.mod[li1] <- NA
+        ns.mod[li1] <- NA
+        }
+    } else
+    {
+    warning(paste("Object", fits[li1], "in fits is not a CR object and has been ignored."))
+    use.mod[li1] <- FALSE
+    nan.mod[li1] <- NA
+    ns.mod[li1] <- NA
+    }
+  }
+
+
+
+# Check that nan and ns are all equal for all model objects.
+dum1 <- min(nan.mod, na.rm=TRUE)
+dum2 <- max(nan.mod, na.rm=TRUE)
+if(dum1 == dum2)
+  {
+  nan <- dum1
+  } else
+  {
+  stop(paste("Number of individuals differ among models. Cannot model average."))
+  }
+
+dum1 <- min(ns.mod, na.rm=TRUE)
+dum2 <- max(ns.mod, na.rm=TRUE)
+if(dum1 == dum2)
+  {
+  ns <- dum1
+  } else
+  {
+  stop(paste("Number of occasions differ among models. Cannot model average."))
+  }
+rm(dum1, dum2, nan.mod, ns.mod)
+
+
+
+# Store dimension names
+dim.nms <- dimnames(fit$histories)
+
+
+
+# Determine number of models to use in model averaging and allocate required
+# memory.  
+n.mod.good <- sum(use.mod)
+if(n.mod.good < 1)
+  {
+  stop(paste("Number of good models equals 0."))
+  }
+if(want.n.hat)
+  {
+  nan <- 1
+  }
+n.stats <- nan*ns
+fits <- fits[use.mod]
+stats <- matrix(0, n.mod.good, n.stats)
+se.stats <- stats
+all.fit.stat <- vector("numeric", n.mod.good)
+
+
+
+# Go through model list a second time and pull out requested statistics.
+for(li1 in 1:n.mod.good)
+  {
+
+  # Retrieve model from memory.
+  fit <- get(fits[li1], pos = .GlobalEnv)
+  
+  # Load statistics
+  stats[li1, 1:n.stats] <- unlist(fit[x.name])
+  se.stats[li1, 1:n.stats] <- unlist(fit[x.se])
+  all.fit.stat[li1] <- unlist(fit[fit.stat])
+  }
+
+
+# Compute model weights
+delta.AIC <- all.fit.stat - min(all.fit.stat)
+dum1 <- exp(-0.5*delta.AIC)
+dum2 <- sum(dum1)
+wi.array <- dum1/dum2
+rm(dum1, dum2)
+
+
+
+# Compute model-averaged real parameters.
+a1 <- stats*wi.array
+theta.average <- apply(a1, 2, sum)
+
+
+
+# Compute model-averaged standard errors.
 var.theta <- se.stats^2
-a1 <- matrix( theta.average, nrow=nrow(stats), ncol=ncol(stats), byrow=TRUE )
-
-
-a2 <- wi.array * ( var.theta + ( stats - a1 )^2 )^0.5 
-se.theta.average <- apply( a2, 2, sum, na.rm = TRUE ) 
-
+dum <- matrix(theta.average, nrow=n.mod.good, ncol=n.stats, byrow=TRUE)
+a2 <- sqrt(var.theta + (stats - dum)^2)*wi.array
+rm(dum)
+se.theta.average <- apply(a2, 2, sum)
 
 
 
-#This is the average conditional standard error among models (i.e.,
-#does not include a variance component for model selection uncertainty). This information
-#is useful in estimating how much of the overall unconditional standard error was 
-#due to variation among models:
-
-a2 <- wi.array * se.stats  
-se.conditional.theta.average <- apply( a2, 2, sum, na.rm = TRUE ) 
-
-AIC.table <- matrix( c( all.fit.stat, delta.AIC, wi.array[,1] ), nrow = length(delta.AIC), ncol = 3 )
-dimnames(AIC.table) <- list( good.fits, c( fit.stat, paste("delta.", fit.stat, sep=""), paste( fit.stat, ".weight", sep="")))
-AIC.table <- AIC.table[ order(AIC.table[,1]), ]
+# Compute conditional standard errors.
+a2 <- se.stats*wi.array
+se.conditional.theta.average <- apply(a2, 2, sum)
 
 
-if( substring(what,1,1) == "s" ){
-	a1 <- list( fit.table = AIC.table, 
-		s.hat = matrix( theta.average, nan, ns ), 
-		se.s.hat = matrix( se.theta.average, nan, ns), 
-		se.s.hat.conditional = matrix( se.conditional.theta.average, nan, ns ),
-		mod.selection.proportion = matrix( (se.theta.average - se.conditional.theta.average) / se.theta.average, nan, ns )
-		)
-    a1$s.hat <- a1$s.hat[ , -ns ]
-    a1$se.s.hat <- a1$se.s.hat[ , -ns ]
-    a1$se.s.hat.conditional <- a1$se.s.hat.conditional[ , -ns ]
-    a1$mod.selection.proportion <- a1$mod.selection.proportion[ , -ns ]
-} else if( substring(what, 1,1) == "c" ){
-	a1 <- list( fit.table = AIC.table, 
-		p.hat = matrix( theta.average, nan, ns ), 
-		se.p.hat = matrix( se.theta.average, nan, ns), 
-		se.p.hat.conditional = matrix( se.conditional.theta.average, nan, ns ),
-		mod.selection.proportion = matrix( (se.theta.average - se.conditional.theta.average) / se.theta.average, nan, ns )
-		)
-    a1$p.hat <- a1$p.hat[ , -1 ]
-    a1$se.p.hat <- a1$se.p.hat[ , -1 ]
-    a1$se.p.hat.conditional <- a1$se.p.hat.conditional[ , -1 ]
-    a1$mod.selection.proportion <- a1$mod.selection.proportion[ , -1 ]
-} else if( substring(what, 1,1) == "n" ){
-	a1 <- list( fit.table = AIC.table, 
-		n.hat =  theta.average, 
-		se.n.hat = se.theta.average, 
-		se.n.hat.conditional = se.conditional.theta.average, 
-		mod.selection.proportion = (se.theta.average - se.conditional.theta.average) / se.theta.average
-		)
-    a1$n.hat[1] <- NA
-    a1$se.n.hat[1] <- NA
-    a1$se.n.hat.conditional[1] <- NA
-    a1$mod.selection.proportion[1] <- NA
-    a1$n.hat.lower <- a1$n.hat - 1.96*a1$se.n.hat
-    a1$n.hat.upper <- a1$n.hat + 1.96*a1$se.n.hat
 
-} 
+# Compute proportion of variance due to model selection uncertainty.
+mod.selection.proportion <- (se.theta.average - se.conditional.theta.average)/
+                             se.theta.average
 
-	
-a1 
+
+                             
+# Load model-averaged estimates into nan by ns matrices.
+hat <- matrix(theta.average, nrow=nan, ncol=ns, byrow=FALSE)
+se.hat <- matrix(se.theta.average, nrow=nan, ncol=ns, byrow=FALSE)
+se.hat.conditional <- matrix(se.conditional.theta.average, nrow=nan, ncol=ns,
+                             byrow=FALSE)
+mod.selection.proportion <- matrix(mod.selection.proportion, nrow=nan, ncol=ns,
+                                   byrow=FALSE)
+
+
+
+# Construct model fit summary table.
+AIC.table <- data.frame(fits, all.fit.stat, delta.AIC, wi.array,
+                        stringsAsFactors=FALSE)
+AIC.table <- AIC.table[order(AIC.table[,3]),]
+names(AIC.table) <- c("model", fit.stat, paste("delta.", fit.stat, sep=""),
+                       paste(fit.stat, ".weight", sep=""))
+
+
+
+# Construct results list.
+if(substring(what, 1, 1) == "s")
+  {
+  dimnames(hat) <- dim.nms                                   
+  dimnames(se.hat) <- dim.nms                                   
+  dimnames(se.hat.conditional) <- dim.nms                                   
+  dimnames(mod.selection.proportion) <- dim.nms                                   
+  results <- list(fit.table=AIC.table, s.hat=hat, se.s.hat=se.hat,
+                  se.s.hat.conditional=se.hat.conditional,
+                  mod.selection.proportion=mod.selection.proportion)
+  } else if(substring(what, 1, 1) == "c")
+  {
+  dimnames(hat) <- dim.nms                                   
+  dimnames(se.hat) <- dim.nms                                   
+  dimnames(se.hat.conditional) <- dim.nms                                   
+  dimnames(mod.selection.proportion) <- dim.nms                                   
+  results <- list(fit.table=AIC.table, p.hat=hat, se.p.hat=se.hat,
+                  se.p.hat.conditional=se.hat.conditional,
+                  mod.selection.proportion=mod.selection.proportion)
+  } else
+  {
+  names(hat) <- dim.nms[[2]]
+  names(se.hat) <- dim.nms[[2]]
+  names(se.hat.conditional) <- dim.nms[[2]]
+  names(mod.selection.proportion) <- dim.nms[[2]]
+  results <- list(fit.table=AIC.table, n.hat=hat, se.n.hat=se.hat,
+                  se.n.hat.conditional=se.hat.conditional,
+                  mod.selection.proportion=mod.selection.proportion)
+  results$n.hat.lower <- results$n.hat - 1.96*results$se.n.hat  
+  results$n.hat.upper <- results$n.hat + 1.96*results$se.n.hat  
+  results$nhat.v.meth <- fit$nhat.v.meth + 3
+  results$n.hat.conf <- 0.95
+  results$intervals <- fit$intervals
+  class(results) <- c("nhat", "cr")
+  }
+
+results
 }
-
-
-
-
-
-
-
-
-
-
-
-
