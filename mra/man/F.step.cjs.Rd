@@ -156,7 +156,8 @@ attr(males, "ns") <- ns
 
 #   Define pool of variables to be considered in each model
 cap.vars <- c("tvar(small.t)","tvar(year)")
-surv.vars <- c("tvar(small.t)","tvar(year)", "tvar(post.flood)", "ivar(males)", "males.postflood")
+surv.vars <- c("tvar(small.t)","tvar(year)", "tvar(post.flood)", "ivar(males)",
+  "males.postflood")
 
 #   Do stepwise selection
 final.fit <- F.step.cjs( cap.vars, surv.vars, histories=ch, 
