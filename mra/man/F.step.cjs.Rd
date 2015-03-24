@@ -10,7 +10,8 @@ and probability of capture models.
 
 
 \usage{
-F.step.cjs(cap.covars, surv.covars, fit.crit = "qaicc", signif.drop = 0, signif.increase = 0, plot = TRUE, ...)
+F.step.cjs(cap.covars, surv.covars, fit.crit = "qaicc", signif.drop = 0, 
+  signif.increase = 0, plot = TRUE, ...)
 }
 
 
@@ -158,7 +159,8 @@ cap.vars <- c("tvar(small.t)","tvar(year)")
 surv.vars <- c("tvar(small.t)","tvar(year)", "tvar(post.flood)", "ivar(males)", "males.postflood")
 
 #   Do stepwise selection
-final.fit <- F.step.cjs( cap.vars, surv.vars, histories=ch, control=mra.control(maxfn=500, cov.meth=2) )
+final.fit <- F.step.cjs( cap.vars, surv.vars, histories=ch, 
+  control=mra.control(maxfn=500, cov.meth=2) )
 
 
 }

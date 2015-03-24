@@ -17,7 +17,8 @@
 }
 \usage{
 F.cjs.estim(capture, survival, histories, cap.init, sur.init, group,  nhat.v.meth = 1, 
-c.hat = -1, df = NA, intervals=rep(1,ncol(histories)-1), conf=0.95, link="logit", control=mra.control())
+c.hat = -1, df = NA, intervals=rep(1,ncol(histories)-1), conf=0.95, 
+link="logit", control=mra.control())
 }
 
 %- maybe also 'usage' for other objects documented here.
@@ -367,7 +368,8 @@ dipper.cjs <- F.cjs.estim( ~tvar(ct,drop=c(1,2)), ~tvar(ct,drop=c(1,6,7)), dippe
 
 ## Method 2 : same thing using 2-d matrices
 xy <- F.cjs.covars( nrow(dipper.histories), ncol(dipper.histories) )
-for(j in 1:ncol(dipper.histories)){ assign(paste("x",j,sep=""), xy$x[,,j]) } # Extract 2-D matrices of 0s and 1s
+# The following extracts 2-D matrices of 0s and 1s
+for(j in 1:ncol(dipper.histories)){ assign(paste("x",j,sep=""), xy$x[,,j]) } 
 dipper.cjs <- F.cjs.estim( ~x3+x4+x5+x6+x7, ~x2+x3+x4+x5, dipper.histories )
 
 ## Values in the 1st column of capture covariates do not matter
