@@ -95,7 +95,6 @@ F.fit.table( fits=ls(pattern="^fit"), rank.by= "qaicc", plausible.p=0.01 )
 
 \examples{
 
-\donttest{
 ## Fit several CJS model to dipper data. Summarize fits.
 
 ## Time varying survival and capture (true CJS model)
@@ -114,7 +113,6 @@ dipr.03 <- F.cjs.estim( ~tvar(ct,drop=c(1,2)), ~1, dipper.histories )
 ## Summary table
 F.fit.table( ls(pat="^dipr") )
 
-}
 
 }
 

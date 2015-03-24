@@ -141,10 +141,12 @@ F.cjs.simulate(super.p, super.s, fit, N1 = 1000, births.per.indiv = "constant.po
 
 \examples{
 
-\donttest{  
-## Careful: These examples can take a long time to run. 
+\dontrun{
+
+## Don't run specified because these examples can take > 10 seconds. 
 
 ## Simulate constant model, and analyze
+
 
 ns <- 10
 N <- 100

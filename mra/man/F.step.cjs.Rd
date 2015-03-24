@@ -157,10 +157,9 @@ attr(males, "ns") <- ns
 cap.vars <- c("tvar(small.t)","tvar(year)")
 surv.vars <- c("tvar(small.t)","tvar(year)", "tvar(post.flood)", "ivar(males)", "males.postflood")
 
-\donttest{
 #   Do stepwise selection
 final.fit <- F.step.cjs( cap.vars, surv.vars, histories=ch, control=mra.control(maxfn=500, cov.meth=2) )
-}
+
 
 }
 
