@@ -145,7 +145,9 @@ nan <- nrow(ch)
 small.t <- as.factor( paste("T",1:ns, sep=""))
 post.flood <- as.numeric( 1:ns >= 4 )
 year <- 1:ns - (ns / 2)
-males.postflood <- males %*% post.flood   # individual and time varying
+males.postflood <- outer( c(males), post.flood ) # individual and time varying
+
+print(dim(males.postflood))
 
 #   Attach attributes to covariates.  For convienence only.
 attr(small.t, "nan") <- nan
