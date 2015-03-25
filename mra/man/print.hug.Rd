@@ -42,7 +42,7 @@ appear in the initial capture model.
 \examples{ 
 
 data(dipper.histories)
-dipper.fit <- F.huggins.estim( ~1, ~1, dipper.histories )
+dipper.fit <- F.huggins.estim( ~1, histories= dipper.histories )
 print(dipper.fit)
 
  }

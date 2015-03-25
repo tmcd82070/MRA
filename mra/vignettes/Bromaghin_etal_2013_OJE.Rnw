@@ -1,4 +1,0 @@
-%\VignetteIndexEntry{Plausible combinations: An improved method to evaluate the covariate structure of Cormack-Jolly-Seber mark-recapture models.}
-\documentclass{article}
-\begin{document}
-\end{document}

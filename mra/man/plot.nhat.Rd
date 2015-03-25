@@ -46,7 +46,7 @@
 
 data(dipper.histories)
 dipper.cjs <- F.cjs.estim( ~1, ~1, dipper.histories )
-plot.nhat(dipper.cjs)
+plot(dipper.cjs,type="n")
 
 # See examples for F.cr.model.avg for a way to plot model averaged population size estimates.
 
