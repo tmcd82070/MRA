@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+mra.rproj
+Spatialtm/
+archive/
+HSL.library
+testingversion
+mra.rcheck
+src-i386
+src-x64
+*.tar.gz
