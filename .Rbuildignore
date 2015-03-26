@@ -15,6 +15,6 @@ testingversion
 .gitignore
 .*\.gz$
 ^README\.md$
-.*\.mod
-.*\.o
-.*\.dll
+.*\.mod$
+.*\.o$
+.*\.dll$
