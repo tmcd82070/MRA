@@ -1,3 +1,13 @@
+## Resubmission comments
+* Changed title in DESCRIPTION to title-case, as required.
+* I have read the current version of CRAN Repository Policy
+(Version $Revision: 3298$).  I agree to them and believe I 
+have complied with all.  
+
+## Current Version
+2.16.3
+Previous submission: 2.16.1
+
 ## Test environments
 * local Windows 7 Pro, R 3.1.3
 * passes devtools::build_win()
