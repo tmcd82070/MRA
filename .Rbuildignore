@@ -14,5 +14,5 @@ HSL.library/
 testingversion/
 mra.rcheck/
 .gitignore
-*.tar.gz
+.*\.gz$
 ^README\.md$
