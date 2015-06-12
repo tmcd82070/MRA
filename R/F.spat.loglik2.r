@@ -23,8 +23,9 @@ F.spat.loglik2 <- function( beta, ch, traps, buffer, type="multi" ){
   require(secr)
   
   # Disallow 0 capture histories
-  if( any(rowSums(ch>0) == 0) ) stop("Cannot have 0 capture histories.")
-  
+  if( any(rowSums(ch>0) == 0) ) stop(paste("Cannot have capture histories of all zeros. check individual", 
+                                           which(rowSums(ch>0)==0)[1]))
+  traps(ch) <- traps
   logL <- secr.fit(ch, model = g0~1, start=beta, buffer = buffer, details=list(LLonly=T))
 
   print(c(beta,-logL))
