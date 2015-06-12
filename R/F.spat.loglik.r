@@ -1,8 +1,8 @@
-# F.spat.hug.loglik -----
+# F.spat.loglik -----
 
-F.spat.hug.loglik <- function( beta, ch, traps, buffer, type="multi" ){
+F.spat.loglik <- function( beta, ch, traps, buffer, type="multi" ){
   # 
-  # Compute Huggins closed population likelihood with spatial locations
+  # Compute closed population SECR likelihood for spatial capture models
   #
   # Input: 
   #   beta = coefficients to minimize over.  
@@ -18,7 +18,7 @@ F.spat.hug.loglik <- function( beta, ch, traps, buffer, type="multi" ){
   #     possible home range centers. 
   #
   # Value:
-  # The spatial Huggins log likelihood, Note, at very last, I multiply by -1 so this 
+  # The spatial (SECR) log likelihood, Note, at very last, I multiply by -1 so this 
   # routine actually returns the negative of the log likelihood.  This is done so 
   # that optim() can minimize and hessian estimationis correct.
   #
@@ -254,18 +254,18 @@ setwd("~/Programs/MRA/TestingVersion")
 # 
 # 
 # # Compute my LL for one observation ----------
-# tmp <- F.spat.hug.loglik( secr0$fit$par, ch01, attr(ch01,"traps"), 100 )
+# tmp <- F.spat.loglik( secr0$fit$par, ch01, attr(ch01,"traps"), 100 )
 # cat(paste("My LL for observation", obsn, ":\n"))
 # print(tmp)
 
 
 # Prep and call secr likelihood
-# tmp <- F.spat.hug.loglik( secr0$fit$par, myCH, attr(myCH,"traps"), 100 )
+# tmp <- F.spat.loglik( secr0$fit$par, myCH, attr(myCH,"traps"), 100 )
 # cat("Success...\n")
 # print(tmp)
 
-#fit1 <- nlminb(secr0$fit$par+ rnorm(3,0,.1), F.spat.hug.loglik, ch=myCH, traps=attr(myCH,"traps"), buffer=100)
-fit2 <- optim(secr0$fit$par+ rnorm(3,0,.1), F.spat.hug.loglik, ch=myCH, traps=attr(myCH,"traps"), buffer=100)
+#fit1 <- nlminb(secr0$fit$par+ rnorm(3,0,.1), F.spat.loglik, ch=myCH, traps=attr(myCH,"traps"), buffer=100)
+fit2 <- optim(secr0$fit$par+ rnorm(3,0,.1), F.spat.loglik, ch=myCH, traps=attr(myCH,"traps"), buffer=100)
 #print(fit2)
 # 
 # tmp2 <- secr.fit(myCH, model = g0~1, start=fit1$par, buffer = 100, details=list(LLonly=T))  
