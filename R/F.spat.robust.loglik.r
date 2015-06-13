@@ -98,8 +98,10 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
   
   Questions for Bill:
     1. Can any closed model be fitted in secondaries. 
-    2. Robust part just needs p* = what? constant over individuals? 
+    2. Robust part just needs p* = what? constant over individuals? What happens when p* varies by individual?
     3. must consider p* when maximizing for s and gamma, correct? 
+    4. do you have to include the multinomial coefficient in L(1) of eqn 2 in kendal 1997
+    5. What is small r_i in Kendall 1997 (total recaptured ever = sum(m_i)?)
   
   p. <- pdot(X, attr(myCH,"traps"), 
                 detectpar=list(g0=1/(1+exp(-secr0$fit$par[2])), sigma=exp(secr0$fit$par[3])), noccasions=5)
