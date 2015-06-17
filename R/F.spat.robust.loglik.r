@@ -40,8 +40,8 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
     g.parms <- grep("^gamma",names(beta))
 
     # For now, same SECR parameters in each primary session
-    g0.params <- grep("^g0",names(beta))
-    sigma.params <- grep("^sigma",names(beta))
+    g0.parms <- grep("^g0",names(beta))
+    sigma.parms <- grep("^sigma",names(beta))
     
     # p parameters
     p <- beta[p.parms]
@@ -59,10 +59,30 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
     
     # g parameters
     # This is the random emigration model, constant across time
-    g <- beta[g.parms][1]
-    if( length(g) != (nprim-1)){
+    g <- beta[g.parms]
+    if( length(g) == (nprim-2)){
+      # constrain last g to second to last g.
+      g <- c(NA,g,g[nprim-2])
+    } else if(length(g) == (nprim-1)){
+      g <- c(NA,g)  # use all gammas
+    } else if( length(g) != (nprim-1)){
       g <- c(NA,rep(g[1],(nprim-1))) # first gamma not possible.
-    }
+    } 
+    # For rest of routine to work g must have length nprim.  g[1]=NA
+    
+    # g0 parameters
+    g0 <- beta[g0.parms]
+    if( length(g0) != nprim ){
+      # Just use first 
+      g0 <- rep(g0[1],nprim)
+    }    
+    
+    # sigma parameters
+    sigma <- beta[sigma.parms]
+    if( length(sigma) != nprim ){
+      # Just use first 
+      sigma <- rep(sigma[1],nprim)
+    } 
     
     list(p.eta=p, s.eta=s, g.eta=g, g0.eta=g0, sigma.eta=sigma)
   }
@@ -73,7 +93,10 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
   # Compute SECR likelihood for each occasion ========================
   # For now, SECR parameters are constant accross (primary) sessions 
   closedLL <- sapply(1:nprimary,function(i,c.hist,b,ns,trps,buff){
-    F.spat.loglik2(b,c.hist[,1:ns[i],trps,buff,i])
+    ch1 <- c.hist[,i,1:ns[i]]  # remove NA's here
+    ch1 <- ch1[rowSums(ch1>0)>0,]    # remove all 0 lines here
+    
+    F.spat.loglik2(b,ch1,trps,buff)
   },
   c.hist=ch, 
   b=c(parms$g0.eta, parms$sigma.eta),
@@ -87,202 +110,23 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
   
   
   
-  # Compute Robust design part of likelihood =========================
+  # Compute Open part of robust design likelihood =========================
   # Take links
   s <- 1/(1+exp(-parms$s.eta))
   gamma <- 1/(1+exp(-parms$gamma.eta))
+  g0 <- 1/(1+exp(-parms$g0.eta))
+  sigma <- exp(parms$sigma.eta)   # Note log link here, rather than logit
   
-  # Evaluate probability of capture each session
-  here.  pdot is specific to a single location.  perhaps the Robust model needs 
-  sum of p.
+  p.star <- F.spatial.pstar(g0, sigma, traps, ch)   # returns nan X nprimary matrix or p.dots
   
-  Questions for Bill:
-    1. Can any closed model be fitted in secondaries. 
-    2. Robust part just needs p* = what? constant over individuals? What happens when p* varies by individual?
-    3. must consider p* when maximizing for s and gamma, correct? 
-    4. do you have to include the multinomial coefficient in L(1) of eqn 2 in kendal 1997
-    5. What is small r_i in Kendall 1997 (total recaptured ever = sum(m_i)?)
+  openLL <- F.robust.open.part(ch,p.star,s,gamma)
   
-  p. <- pdot(X, attr(myCH,"traps"), 
-                detectpar=list(g0=1/(1+exp(-secr0$fit$par[2])), sigma=exp(secr0$fit$par[3])), noccasions=5)
   
-  # Evaluate robust design part of likelihood
-  p.star <- 1 - (1-p)^nsecondary  # constant within secondary.  This is prob of catch each primary
-  ch.reduced <- apply(ch,2,function(c.hist){
-    as.numeric(rowSums(c.hist>0,na.rm=T)>0)
-  })  # collapse secondary periods to captured or not.  This is nan X nprimary
-  
-  #   print(ch.reduced[1:5,])
-  
-  # First and last primary occasions of encounter
-  f <- apply(col(ch.reduced)*(ch.reduced >= 1), 1, function(x){ min(x[x>0])})
-  l <- apply(col(ch.reduced)*(ch.reduced >= 1), 1, function(x){ max(x[x>0])})
-  
-  #   print(cbind(f,l)[1:5,])
-  
-  # Expand survival so can multiply later
-  s.mat <- matrix( rep(s, nan), nan, nprimary-1, byrow=T )
-  
-  # "Live" cells in ch matrix
-  alive <- ch.reduced
-  alive[ f <= col(alive) & col(alive) <= l ] <- 1
-  
-  # Survival part of likelihood
-  s.ints <- alive[,-1]*alive[,-ncol(alive)]   # intervals known to be alive
-  #  cat("S part ====== \n")
-  #  print(s.ints)
-  s.part <- s.ints * log(s.mat)
-  #  print(s.part)
-  s.part <- -sum( s.part )
-  cat(paste("s part:", s.part, "\n"))
-  
-  # Gamma = immigration part of likelihood
-  f.gamma.recurse<-function(h,g,p){
-    
-    #     cat("h=")
-    #     cat(h)
-    #     cat("\n")
-    #     cat("g=")
-    #     cat(g)
-    #     cat("\n")
-    #     cat("p=")
-    #     cat(p)
-    #     cat("\n")
-    
-    if( length(h)<=1 ) return(1)
-    
-    if(h[1]==1 & h[2]==1){
-      # These would be gamma prime primes if Markovian movement
-      ans <- (1-g[2])*(p[2])*f.gamma.recurse(h[-1],g[-1],p[-1])
-      
-    } else if(h[1]==1 & h[2]==0){
-      # These would be gamma prime primes if Markovian movement
-      ans <- (1-g[2])*(1-p[2])*f.gamma.recurse(h[-1],g[-1],p[-1]) +
-        (g[2])*f.gamma.recurse(h[-1],g[-1],p[-1]) 
-      
-    } else if(h[1]==0 & h[2]==1){
-      # These would be gamma primes if Markovian movement
-      ans <- (1-g[2])*(p[2])*f.gamma.recurse(h[-1],g[-1],p[-1]) 
-      
-    } else if(h[1]==0 & h[2]==0){
-      # These would be gamma primes if Markovian movement      
-      ans <- (1-g[2])*(1-p[2])*f.gamma.recurse(h[-1],g[-1],p[-1]) +
-        (g[2])*f.gamma.recurse(h[-1],g[-1],p[-1]) 
-    }
-    ans
-  }
-  
-  f.gamma.indiv <- function(i,ch,g,p,f,l){
-    pos <- seq(along=ch[i,])
-    ind <- f[i] <= pos & pos <= l[i]
-    ch.i <- ch[i,ind]
-    g.i <- g[ind]   # note, g and p are one element shorter than chi.i
-    p.i <- p[ind]   # this is because condition on first capture.
-    # computations in recursive part are based on the second of 
-    # capture indicator pairs.
-    #     cat("-----\n")
-    ans <- f.gamma.recurse(ch.i, g.i, p.i)
-  }
-  
-  g.part <- sapply(1:nan, f.gamma.indiv, ch=ch.reduced, g=g, p=p.star, f=f, l=l)
-  #   print(cbind(ch.reduced,g.part)[1:10,])
-  
-  g.part <- -sum(log(g.part))
-  cat(paste("g part:", g.part, "\n"))
-  
-  # Chi part of likelihood
-  f.chi.recurse <- function(i,g,p,s,K){
-    if( i==K ) return(1)
-    
-    #     cat(paste("i=",i,"\n"))
-    #     cat("g=")
-    #     cat(g)
-    #     cat("\n")
-    #     cat("p=")
-    #     cat(p)
-    #     cat("\n")
-    #     cat("s=")
-    #     cat(s)
-    #     cat("\n")
-    
-    
-    
-    # From Kendal et al 1997:
-    
-    ans <- 1 - s[i]*(1 - (1 - (1 - g[i+1])*p[i+1])*f.chi.recurse(i+1,g,p,s,K))
-    ans
-  }
-  
-  f.chi.indiv <- function(i,g,p,s,l,K){
-    ans <- f.chi.recurse(l[i], g, p, s, K)
-  }
-  
-  chi.part <- sapply(1:nan, f.chi.indiv, g=g, p=p.star, l=l, s=s, K=nprimary)
-  #   print(cbind(ch.reduced,chi.part)[1:10,])
-  
-  chi.part <- -sum(log(chi.part))
-  cat(paste("Chi part:", chi.part, "\n"))
-  
-  ll <- s.part + g.part + chi.part + closedLL
+  # Done ======================================================
+  ll <- openLL - closedLL
+
+  print(ll)
+
   ll
 }
 
-# =================================================================
-
-source("./r/F.hug.loglik.r")
-
-fn <- "c:/Program Files (x86)/MARK/Examples/Robust Design Huggins.inp"
-ch <- read.table( fn, skip=3, colClasses=c("character","numeric",NULL), col.names=c("h","freq","sc"))
-chh <- NULL
-for(i in 1:nrow(ch)){
-  chh <- c(chh, rep(ch$h[i], ch$freq[i]))
-}
-
-ch.expand <-function(ch){
-  nc <- nchar(ch[1])
-  matrix(as.numeric(t(sapply(ch,substring,first=1:nc,last=1:nc))),length(ch))
-}
-CH <- array(NA,c(length(chh),5,5))
-CH[,1:2,1] <- ch.expand(substring(chh,1,2))
-CH[,1:2,2] <- ch.expand(substring(chh,3,4))
-CH[,1:4,3] <- ch.expand(substring(chh,5,8))
-CH[,1:5,4] <- ch.expand(substring(chh,9,13))
-CH[,1:2,5] <- ch.expand(substring(chh,14,15))
-
-beta <- c(0,0,0)
-names(beta) <- c("p","s","g")
-tmp <- F.robust.loglik( beta, CH)
-print(tmp)
-
-
-beta <- c(1.7140078, -1.9046820, 0.6841988, 0.4789440, 0.4296271, 0.4280551, -0.2745019)
-names(beta) <- c("s","g",rep("p",5))
-tmp <- F.robust.loglik( beta, CH)
-print(tmp)
-
-
-fit1 <- optim( beta, F.robust.loglik, ch=CH,  hessian=T, method="Nelder-Mead", control=list(reltol=1e-10, maxit=500))
-
-
-
-# ======== some checking =======
-
-# This gives the correct huggins estimates for separate primaries. 
-# ch1 <- CH[,1:5,4]
-# ch1 <- ch1[rowSums(ch1)>=1,]
-# fit1 <- optim( c(0), F.hug.loglik, ch=ch1, hessian=T, method="Brent", lower=-4, upper=4,  control=list(reltol=1e-10, maxit=500))
-
-# Perspective plot =======
-
-# library(rgl)
-# pp <- seq(0.01, .99, length=50)
-# oo <- seq(0.01, .99, length=50)
-# pp <- log(pp/(1-pp))
-# oo <- log(oo/(1-oo))
-# df <- expand.grid(oo=oo, pp=pp)
-# zz <- apply(df, 1, F.cjs.loglik, ch=ch)
-# zz <- matrix(zz, length(oo), length(pp))
-# ncols <- 20
-# col.levs <- cut( zz, ncols, labels=FALSE)
-# mycols <- heat.colors(ncols)[col.levs]
-# persp3d(oo,pp,zz, col=mycols)
