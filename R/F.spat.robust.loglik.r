@@ -22,8 +22,8 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
   # Find dimensions                                 
   d <- dim(ch)
   nan <- d[1]
-  nprimary <- d[3]
-  nsecondary <- apply(ch,3,function(x){
+  nprimary <- d[2]
+  nsecondary <- apply(ch,2,function(x){
     xx<-apply(x,2,function(y){all(is.na(y))})
     sum(!xx)
   })
@@ -42,13 +42,6 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
     # For now, same SECR parameters in each primary session
     g0.parms <- grep("^g0",names(beta))
     sigma.parms <- grep("^sigma",names(beta))
-    
-    # p parameters
-    p <- beta[p.parms]
-    if( length(p) != nprim ){
-      # Just use first p
-      p <- rep(p[1],nprim)
-    }
     
     # s parameters
     s <- beta[s.parms]
@@ -84,12 +77,12 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
       sigma <- rep(sigma[1],nprim)
     } 
     
-    list(p.eta=p, s.eta=s, g.eta=g, g0.eta=g0, sigma.eta=sigma)
+    list(s.eta=s, g.eta=g, g0.eta=g0, sigma.eta=sigma)
   }
   parms <- f.real.model(beta,nprimary)
   
   print(parms)
-  
+  print(nsecondary)
   # Compute SECR likelihood for each occasion ========================
   # For now, SECR parameters are constant accross (primary) sessions 
   closedLL <- sapply(1:nprimary,function(i,c.hist,b,ns,trps,buff){

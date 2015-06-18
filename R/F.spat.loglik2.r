@@ -25,7 +25,19 @@ F.spat.loglik2 <- function( beta, ch, traps, buffer, type="multi" ){
   # Disallow 0 capture histories
   if( any(rowSums(ch>0) == 0) ) stop(paste("Cannot have capture histories of all zeros. check individual", 
                                            which(rowSums(ch>0)==0)[1]))
+
+  print(ch)
+  
+  attr(traps,"detector") <- type  
+  class(traps) <- c("traps","data.frame")
+  class(ch) <- "capthist"
+  
+  print(traps)
   traps(ch) <- traps
+#   attr(ch,"traps") <- traps
+
+  print(verify(ch))
+
   logL <- secr.fit(ch, model = g0~1, start=beta, buffer = buffer, details=list(LLonly=T))
 
   print(c(beta,-logL))
@@ -42,7 +54,7 @@ F.spat.loglik2 <- function( beta, ch, traps, buffer, type="multi" ){
 #library(secr)
 #setwd(system.file('extdata', package='secr'))
 #myCH <- read.capthist('capt.txt','trap.txt', fmt = 'XY')
-setwd("~/Programs/MRA/TestingVersion")
+#setwd("~/Programs/MRA/TestingVersion")
 
 #secr0 <- secr.fit(myCH, model = g0~1, buffer = 100, trace = FALSE) 
 
@@ -59,8 +71,8 @@ setwd("~/Programs/MRA/TestingVersion")
 # print(tmp)
 
 #fit1 <- nlminb(secr0$fit$par+ rnorm(3,0,.1), F.spat.loglik, ch=myCH, traps=attr(myCH,"traps"), buffer=100)
-fit2 <- optim(secr0$fit$par+ rnorm(3,0,.1), F.spat.loglik2, ch=myCH, traps=attr(myCH,"traps"), buffer=100)
-print(fit2)
+#fit2 <- optim(secr0$fit$par+ rnorm(3,0,.1), F.spat.loglik2, ch=myCH, traps=attr(myCH,"traps"), buffer=100)
+#print(fit2)
 # 
 # tmp2 <- secr.fit(myCH, model = g0~1, start=fit1$par, buffer = 100, details=list(LLonly=T))  
 # cat("SECR LL at my params:\n")
