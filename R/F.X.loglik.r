@@ -14,6 +14,7 @@ F.X.loglik <- function(x, h, traps, g0, sigma){
   
   d <- sqrt( (xx-traps[,1])^2 + (xy-traps[,2])^2 )  
   
+  
   # Detection function
   g <- g0*exp(-0.5*(d/sigma)^2)
   
@@ -21,10 +22,13 @@ F.X.loglik <- function(x, h, traps, g0, sigma){
   h.  <- sum(h.k)  # sum over K = traps.  
   p.s  <- 1-exp(-h.)  # this is P(capture)
   
-  PI <- p.s * h.k / (h. + 0.00000001)  # prob of capture by each trap. 
+  PI <- p.s * h.k / (h. + 0.000000001)  # prob of capture by each trap. 
   PI <- c(1-p.s, PI)  # cell probabilities, with P(not cap) = first element
   
-  loglik <- log(PI[h+1])
+  PI.cells <- PI[h+1]
+  PI.cells[PI.cells<.Machine$double.eps] <- .Machine$double.eps
+  
+  loglik <- log(PI.cells)
 
   #print(c(x,-sum(loglik)))
   

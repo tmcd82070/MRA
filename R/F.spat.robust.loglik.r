@@ -40,6 +40,7 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
     g.parms <- grep("^gamma",names(beta))
 
     # For now, same SECR parameters in each primary session
+    D.parms <- grep("^D",names(beta))
     g0.parms <- grep("^g0",names(beta))
     sigma.parms <- grep("^sigma",names(beta))
     
@@ -58,6 +59,9 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
       g <- c(NA,g,g[nprim-2])
     } else if(length(g) == (nprim-1)){
       g <- c(NA,g)  # use all gammas
+    } else if( length(g) == 0 ){
+      # Constrain gamma to zero
+      g <- c(NA,rep(0,nprim-1))
     } else if( length(g) != (nprim-1)){
       g <- c(NA,rep(g[1],(nprim-1))) # first gamma not possible.
     } 
@@ -76,30 +80,42 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
       # Just use first 
       sigma <- rep(sigma[1],nprim)
     } 
+
+    # Density parameters
+    D <- beta[D.parms]
+    if( length(D) != nprim ){
+      # Just use first 
+      D <- rep(D[1],nprim)
+    } 
     
-    list(s.eta=s, g.eta=g, g0.eta=g0, sigma.eta=sigma)
+    list(s.eta=s, gamma.eta=g, D.eta=D, g0.eta=g0, sigma.eta=sigma)
   }
   parms <- f.real.model(beta,nprimary)
   
-  print(parms)
-  print(nsecondary)
+#    print(parms)
+#   print(nsecondary)
+
   # Compute SECR likelihood for each occasion ========================
   # For now, SECR parameters are constant accross (primary) sessions 
   closedLL <- sapply(1:nprimary,function(i,c.hist,b,ns,trps,buff){
     ch1 <- c.hist[,i,1:ns[i]]  # remove NA's here
     ch1 <- ch1[rowSums(ch1>0)>0,]    # remove all 0 lines here
     
-    F.spat.loglik2(b,ch1,trps,buff)
+    D.i.pos <- grep("^D",names(b))[i]
+    g0.i.pos <- grep("^g0",names(b))[i]
+    sigma.i.pos <- grep("^sigma",names(b))[i]
+
+    F.spat.loglik2(b[c(D.i.pos, g0.i.pos, sigma.i.pos)],ch1,trps,buff)
   },
   c.hist=ch, 
-  b=c(parms$g0.eta, parms$sigma.eta),
+  b=c(parms$D.eta, parms$g0.eta, parms$sigma.eta),
   ns=nsecondary, 
   trps=traps,
   buff=buffer
   )
   closedLL <- sum(closedLL)
   
-  cat(paste("SECR part:", closedLL, "\n"))
+#   cat(paste("SECR part:", closedLL, "\n"))
   
   
   
@@ -111,15 +127,19 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
   sigma <- exp(parms$sigma.eta)   # Note log link here, rather than logit
   
   p.star <- F.spatial.pstar(g0, sigma, traps, ch)   # returns nan X nprimary matrix or p.dots
-  
+
+
+
+  # This returns the "real" log likelihood, not the negative
   openLL <- F.robust.open.part(ch,p.star,s,gamma)
   
   
   # Done ======================================================
-  ll <- openLL - closedLL
+  ll <- openLL + closedLL
 
-  print(ll)
+  cat(c(-ll))
+  cat(", ")
 
-  ll
+  -ll
 }
 

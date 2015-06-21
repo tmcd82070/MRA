@@ -7,10 +7,17 @@ F.spatial.pstar <- function(g0, sigma, traps, ch){
   nprim <- dim(ch)[2]
   nsec <- dim(ch)[3]
 
+  # for pdot to work below, traps has to be a "traps" object.
+  traps <- as.data.frame(traps)
+  rownames(traps)<-1:nrow(traps)
+  attr(traps,"detector") <- "multi"  
+  class(traps) <- c("traps","data.frame")
+  
   p.star <- matrix(NA, nan, nprim)
   
   for(j in 1:nprim){
     # for some reason, loop over primaries first.  Could do other way around. 
+    
     for( i in 1:nan){
       if( sum(ch[i,j,]) > 0 ){
         h <- ch[i,j,]
@@ -30,11 +37,16 @@ F.spatial.pstar <- function(g0, sigma, traps, ch){
         p.star[i,j] <- p.
       
       }
+    
     }
-    # Assign average for animal when it is missed. 
-    p.star[i,is.na(p.star[i,])] <- mean(p.star[i,!is.na(p.star[i,])])
   }
 
+  # Assign average for animal when it is missed. 
+  p.star <- apply(p.star, 1, function(x){
+    x[is.na(x)] <- mean(x,na.rm=TRUE)  
+    x
+  })
+  p.star <- t(p.star)
 
   p.star
 }

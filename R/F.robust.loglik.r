@@ -80,9 +80,10 @@ F.robust.loglik <- function( beta, ch ){
       b=parms$p.eta,
       ns=nsecondary
   )
-  closedLL <- sum(closedLL)
+  closedLL <- -sum(closedLL)   # we want the "real" log like, not negated,
+                               # F.hug.loglik returns the negated.
   
-#   cat(paste("Closed part:", closedLL, "\n"))
+#    cat(paste("Closed part:", closedLL, "\n"))
   
   # Take links
   p <- 1/(1+exp(-parms$p.eta))
@@ -94,7 +95,9 @@ F.robust.loglik <- function( beta, ch ){
 
   openLL <- F.robust.open.part(ch,p.star,s,g)
 
-  ll <- openLL - closedLL
+#  cat(paste("Open part:",openLL,"\n"))
+
+  ll <- openLL + closedLL
 print(-ll)
   -ll
 }
@@ -103,6 +106,7 @@ print(-ll)
 
 source("./../r/F.hug.loglik.r")
 source("./../r/F.collapse.secondaries.r")
+source("./../r/F.robust.open.part.r")
 
 fn <- "c:/Program Files (x86)/MARK/Examples/Robust Design Huggins.inp"
 ch <- read.table( fn, skip=3, colClasses=c("character","numeric",NULL), col.names=c("h","freq","sc"))
@@ -147,7 +151,6 @@ beta <-c(
   -2.3646612,
   -2.0140449,
   -1.7334309,
-  -1.6976925,
   0.6841976,
   0.3841437,
   0.4176103,
@@ -158,7 +161,7 @@ names(beta)<-c(rep("s",4),rep("g",3),rep("p",5))
 
 #beta <- fit1$par
 
-# tmp <- F.robust.loglik2( beta, CH)
+# tmp <- F.robust.loglik( beta, CH)
 # print(tmp)
 
 

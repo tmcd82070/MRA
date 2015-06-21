@@ -91,7 +91,7 @@ F.robust.loglik2 <- function( beta, ch ){
 # print(closedLL)
   closedLL <- -sum(closedLL)  # F.hug.loglik returns -LL. re-negative it here so can add later.
   
-#  cat(paste("Closed part:", closedLL, "\n"))
+  cat(paste("Closed part:", closedLL, "\n"))
   
   
   # Evaluate open part of model =====================================================================
@@ -184,9 +184,9 @@ F.robust.loglik2 <- function( beta, ch ){
   
   chi.part <- sum(never.seen.again*log(chi))
 
-# cat(paste("ll part:", ll, "\n"))
-# cat(paste("Chi part:", chi.part, "\n"))
-# cat(paste("closed part:", closedLL, "\n"))
+ cat(paste("ll part:", ll, "\n"))
+ cat(paste("Chi part:", chi.part, "\n"))
+ cat(paste("closed part:", closedLL, "\n"))
 
   ll <- ll + chi.part + closedLL
   print(-ll)
@@ -197,6 +197,7 @@ F.robust.loglik2 <- function( beta, ch ){
 
 source("./../r/F.hug.loglik.r")
 source("./../r/F.collapse.secondaries.r")
+source("./../r/F.m.array.r")
 
 # An example from MARK ===================================================================================
 fn <- "c:/Program Files (x86)/MARK/Examples/Robust Design Huggins.inp"
@@ -235,18 +236,17 @@ beta <-c(
 -2.3646612,
 -2.0140449,
 -1.7334309,
--1.6976925,
 0.6841976,
 0.3841437,
 0.4176103,
 0.4364079,
 -0.0943085)
-beta <- rep(0,4+3+5)
+#beta <- rep(0,4+3+5)
 names(beta)<-c(rep("s",4),rep("g",3),rep("p",5))
 
 #beta <- fit1$par
 
-# tmp <- F.robust.loglik2( beta, CH)
+ tmp <- F.robust.loglik2( beta, CH)
 # print(tmp)
 
 
@@ -261,10 +261,10 @@ names(beta)<-c(rep("s",4),rep("g",3),rep("p",5))
 
 # This is S(.),g(.),p(t)
 
-beta <- c(1.7, -1.9, 0.68, 0.47, 0.43, 0.43, -0.27)
-names(beta) <- c("s","g",rep("p",5))
-
-fit3 <- optim( beta, F.robust.loglik2, ch=CH,  hessian=T, method="BFGS", control=list(reltol=1e-10, maxit=1000))
+# beta <- c(1.7, -1.9, 0.68, 0.47, 0.43, 0.43, -0.27)
+# names(beta) <- c("s","g",rep("p",5))
+# 
+# fit3 <- optim( beta, F.robust.loglik2, ch=CH,  hessian=T, method="BFGS", control=list(reltol=1e-10, maxit=1000))
 
 ## THIS CONSTRAINED MODEL ALSO WORKS. Same answers as MARK.
 
