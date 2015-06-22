@@ -41,12 +41,16 @@ F.spatial.pstar <- function(g0, sigma, traps, ch){
     }
   }
 
-  # Assign average for animal when it is missed. 
-  p.star <- apply(p.star, 1, function(x){
-    x[is.na(x)] <- mean(x,na.rm=TRUE)  
-    x
-  })
-  p.star <- t(p.star)
+#   # Assign average for animal when it is missed. 
+#   p.star <- apply(p.star, 1, function(x){
+#     x[is.na(x)] <- mean(x,na.rm=TRUE)  
+#     x
+#   })
+#   p.star <- t(p.star)
+
+  # Assign average of animals that were captured. this is not 
+  # Average over entire habitat mask, but try it. 
+  p.star[is.na(p.star)] <- mean(p.star,na.rm=TRUE)
 
   p.star
 }

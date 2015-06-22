@@ -126,8 +126,10 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
   g0 <- 1/(1+exp(-parms$g0.eta))
   sigma <- exp(parms$sigma.eta)   # Note log link here, rather than logit
   
-  p.star <- F.spatial.pstar(g0, sigma, traps, ch)   # returns nan X nprimary matrix or p.dots
+#   p.star <- F.spatial.pstar(g0, sigma, traps, ch)   # returns nan X nprimary matrix or p.dots
 
+
+  p.star <- F.spatial.pstar2(g0, sigma, traps, ch, buffer)
 
 
   # This returns the "real" log likelihood, not the negative
