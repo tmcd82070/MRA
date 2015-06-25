@@ -36,9 +36,10 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
     # Current implementation allows small t or dot model for  s
     # This returns linear predictors.  Link functions are applied later.
     
-    s.parms <- grep("^s",names(beta))
+    s.parms <- grep("^S",names(beta))
     g.parms <- grep("^gamma",names(beta))
 
+    
     # For now, same SECR parameters in each primary session
     D.parms <- grep("^D",names(beta))
     g0.parms <- grep("^g0",names(beta))
@@ -139,8 +140,11 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
   # Done ======================================================
   ll <- openLL + closedLL
 
-  cat(c(-ll))
-  cat(", ")
+#   cat(c(-ll))
+#   cat(", ")
+
+  cat(c(-ll,beta))
+  cat("\n")
 
   -ll
 }

@@ -27,6 +27,12 @@ F.spatial.pstar2 <- function(g0, sigma, traps, ch, buffer){
         x.cent <-  mean(tr[h,1]) # centroid x
         y.cent <-  mean(tr[h,2]) # centroid y
         
+        if( any(is.na(c(x.cent,y.cent))) ){
+          cat("Missing initial values:\n")
+          print(c(x.cent,y.cent))
+          x.cent <- mean(tr[,1])
+          y.cent <- mean(tr[,2])
+        }
         # Find ML estimate of location
         X.ml <- optim( c(x.cent,y.cent), F.X.loglik, h=h, traps=tr, g0=g0[j], sigma=sigma[j])
         
@@ -79,3 +85,11 @@ F.spatial.pstar2 <- function(g0, sigma, traps, ch, buffer){
   
   p.star
 }
+
+# tmp.1 <- c(0.4049685, 0.4187768, 0.3477709, 0.3831983)
+# tmp.1 <- 1/(1+exp(-tmp.1))
+# tmp.2 <- c(2.541767, 2.548663, 2.54559, 2.547148)
+# tmp.2 <- exp(tmp.2)
+# 
+# tmp <- F.spatial.pstar2( tmp.1, tmp.2, coordinates(X), H, 100)
+#             
