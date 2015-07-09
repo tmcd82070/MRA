@@ -1,4 +1,4 @@
-F.spatial.pstar2 <- function(g0, sigma, traps, ch, sa, pt.searchdist){
+F.spatial.pstar2 <- function(g0, sigma, traps, ch, sa, pt.searchdist=NULL){
   #
   # Purpose: to estimate a p.star (or p. in spatial notation) for every captured individual every primary. 
   # do this by first estimating a location via Max Like.
