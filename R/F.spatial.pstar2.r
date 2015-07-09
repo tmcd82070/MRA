@@ -1,7 +1,12 @@
-F.spatial.pstar2 <- function(g0, sigma, traps, ch, buffer){
+F.spatial.pstar2 <- function(g0, sigma, traps, ch, sa, pt.searchdist){
   #
   # Purpose: to estimate a p.star (or p. in spatial notation) for every captured individual every primary. 
-  # do this by first estimating a location via Max Like. 
+  # do this by first estimating a location via Max Like.
+  #
+  # g0, sigma = parameters of distance function
+  # traps = R X 2 matrix of trap coordinates
+  # ch = nan X nprim X nsec matrix of trap-capture histories
+  # sa = S X 2 matrix of possible locations in study area. Used for integration.  
   
   nan <- dim(ch)[1]
   nprim <- dim(ch)[2]
@@ -14,6 +19,17 @@ F.spatial.pstar2 <- function(g0, sigma, traps, ch, buffer){
   class(tr) <- c("traps","data.frame")
   
   p.star <- matrix(NA, nan, nprim)
+  
+  # If study area is not a SpatialPOints object, convert it to one.  Later, we convert back to matrix
+  if( length(grep("SpatialPoints", class(sa))) == 0 ){
+    sa <- SpatialPoints(sa)
+  }
+  
+  # Set distance to search for habitat points from ML estimat of point.  For gridded habitat, 
+  # this should be sqrt(2)*grid spacing
+  if(is.null(pt.searchdist)){
+    pt.searchdist <- F.pt.searchdist(sa)
+  }
   
   # First, loop over occasions when individual was caught. 
   for(j in 1:nprim){
@@ -36,8 +52,11 @@ F.spatial.pstar2 <- function(g0, sigma, traps, ch, buffer){
         # Find ML estimate of location
         X.ml <- optim( c(x.cent,y.cent), F.X.loglik, h=h, traps=tr, g0=g0[j], sigma=sigma[j])
         
-        # Compute p. = p.star for ML location
-        p. <- pdot(X.ml$par, tr, 
+        # X.ml may not be in habitat. Check and move it to habitat point with highest loglik. 
+        X.ml <- F.move.2.habitat(X.ml, sa, pt.searchdist, h, tr, g0[j], sigma[j])
+        
+        # Compute p. = p.star for location in habitat at least close to ML
+        p. <- pdot(X.ml, tr, 
                    detectpar=list(g0=g0[j], sigma=sigma[j]), noccasions=nsec)
         
         # Store p. for output
@@ -48,11 +67,9 @@ F.spatial.pstar2 <- function(g0, sigma, traps, ch, buffer){
     }
   }
   
+ 
+  
   # Now loop over every location in the mask, and average
-  habmask <- SpatialPoints(traps,proj4string=CRS("+init=epsg:26915"))
-  coordnames(habmask) <- c("x","y")
-  sa <- gBuffer( habmask, width=buffer )
-  sa <- spsample( sa, 1000, "regular" )
   sa <- coordinates(sa)
   P <- rep(0,nprim)
   for(j in 1:nprim){

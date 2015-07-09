@@ -1,6 +1,6 @@
 # F.spat.loglik -----
 
-F.spat.loglik2 <- function( beta, ch, traps, buffer, type="multi" ){
+F.spat.loglik2 <- function( beta, ch, traps, mask, type="multi" ){
   # 
   # Compute closed SECR  likelihood with spatial locations using SECR routine
   #

@@ -98,7 +98,7 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer, hab.mask ){
 
   # Compute SECR likelihood for each occasion ========================
   # For now, SECR parameters are constant accross (primary) sessions 
-  closedLL <- sapply(1:nprimary,function(i,c.hist,b,ns,trps,buff){
+  closedLL <- sapply(1:nprimary,function(i,c.hist,b,ns,trps,mask){
     ch1 <- c.hist[,i,1:ns[i]]  # remove NA's here
     ch1 <- ch1[rowSums(ch1>0)>0,]    # remove all 0 lines here
     
@@ -106,13 +106,13 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer, hab.mask ){
     g0.i.pos <- grep("^g0",names(b))[i]
     sigma.i.pos <- grep("^sigma",names(b))[i]
 
-    F.spat.loglik2(b[c(D.i.pos, g0.i.pos, sigma.i.pos)],ch1,trps,buff)
+    F.spat.loglik2(b[c(D.i.pos, g0.i.pos, sigma.i.pos)],ch1,trps,mask)
   },
   c.hist=ch, 
   b=c(parms$D.eta, parms$g0.eta, parms$sigma.eta),
   ns=nsecondary, 
   trps=traps,
-  buff=buffer
+  mask=hab.mask
   )
   closedLL <- sum(closedLL)
   
