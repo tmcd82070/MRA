@@ -1,7 +1,7 @@
 # Fits a Spatial Robust design model via maximum likelihood
 # 
 # Objective function -----
-F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
+F.spat.robust.loglik <- function( beta, ch, traps, buffer, hab.mask ){
   #
   # inputs:
   #   beta = coefficients
@@ -93,7 +93,7 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
   }
   parms <- f.real.model(beta,nprimary)
   
-#    print(parms)
+    print(parms)
 #   print(nsecondary)
 
   # Compute SECR likelihood for each occasion ========================
@@ -130,8 +130,9 @@ F.spat.robust.loglik <- function( beta, ch, traps, buffer ){
 #   p.star <- F.spatial.pstar(g0, sigma, traps, ch)   # returns nan X nprimary matrix or p.dots
 
 
-  p.star <- F.spatial.pstar2(g0, sigma, traps, ch, buffer)
-
+  p.star <- F.spatial.pstar2(g0, sigma, traps, ch, hab.mask)
+  
+  #print(p.star)
 
   # This returns the "real" log likelihood, not the negative
   openLL <- F.robust.open.part(ch,p.star,s,gamma)

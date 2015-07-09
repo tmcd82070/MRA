@@ -34,12 +34,16 @@ F.spat.loglik2 <- function( beta, ch, traps, buffer, type="multi" ){
   class(ch) <- "capthist"
   
   traps(ch) <- traps
+  
+#   print(ch)
+#   print(beta)
+#   print(buffer)
 
   logL <- secr.fit(ch, model = list(D~1,g0~1,sigma~1), start=beta, buffer = buffer, details=list(LLonly=T))
 
-#   print(c(beta,logL))
+    print(c(beta,logL))
   
-  logL
+  -logL
   
 }
 

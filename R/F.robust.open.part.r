@@ -35,7 +35,7 @@ F.robust.open.part <- function(ch, p.star, s, g){
   s.part <- s.ints * log(s.mat)
   #  print(s.part)
   s.part <- sum( s.part )
-#      cat(paste("s part:", s.part, "\n"))
+      cat(paste("s part:", s.part, "\n"))
   
   # IMMIGRATION PART =========================================================
   # Gamma = immigration part of likelihood
@@ -93,12 +93,14 @@ F.robust.open.part <- function(ch, p.star, s, g){
     p.star <- matrix( p.star, nan, nprimary, byrow=T )
 #    print(p.star)
   }
-  
+
+assign("tmp.pstar2",p.star, pos=.GlobalEnv)
+
   g.part <- sapply(1:nan, f.gamma.indiv, ch=ch.reduced, g=g, p=p.star, f=f, l=l)
 #     print(cbind(ch.reduced,g.part)[1:10,])
   
   g.part <- sum(log(g.part))
-#      cat(paste("g part:", g.part, "\n"))
+  cat(paste("g part:", g.part, "\n"))
   
   # CHI PART =========================================================
   f.chi.recurse <- function(i,g,p,s,K){
@@ -125,13 +127,17 @@ F.robust.open.part <- function(ch, p.star, s, g){
   
   f.chi.indiv <- function(i,g,p,s,l,K){
     ans <- f.chi.recurse(l[i], g, p[i,], s, K)
+#     cat(paste("i=",i,"l[i]=",l[i],"K=",K,"ans=",ans,"\n"))   
+    ans
   }
   
   chi.part <- sapply(1:nan, f.chi.indiv, g=g, p=p.star, l=l, s=s, K=nprimary)
-#     print(cbind(ch.reduced,chi.part)[1:10,])
-  
+
+#   print(cbind(ch.reduced,chi.part)[1:10,])
+#   print(class(chi.part))
+
   chi.part <- sum(log(chi.part))
-#      cat(paste("Chi part:", chi.part, "\n"))
+       cat(paste("Chi part:", chi.part, "\n"))
   
   # Return the "real" log likelihood, not the negative of it.  
   # Assumably it will be negated in another routine. 
