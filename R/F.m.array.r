@@ -48,7 +48,7 @@ F.m.array<-function( hists ){
 			
 # ====================================
 
-ch.reduced <- F.collapse.secondaries(CH)
-tmpm <- F.m.array(ch.reduced)
+#ch.reduced <- F.collapse.secondaries(CH)
+#tmpm <- F.m.array(ch.reduced)
 
 

@@ -776,7 +776,7 @@ subroutine hugginsmodel( &
     end do
     if (ny >= 1) then
         do i = nx+1, ptr_np
-            parameters(i) = c_init(i)
+            parameters(i) = c_init(i-nx)
         end do
     end if
 

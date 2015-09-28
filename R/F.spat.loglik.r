@@ -227,10 +227,10 @@ F.spat.loglik <- function( beta, ch, traps, buffer, type="multi" ){
 # ============================================================================
 # Function calls 
 
-library(secr)
+#library(secr)
 #setwd(system.file('extdata', package='secr'))
 #myCH <- read.capthist('capt.txt','trap.txt', fmt = 'XY')
-setwd("~/Programs/MRA/TestingVersion")
+#setwd("~/Programs/MRA/TestingVersion")
 
 #secr0 <- secr.fit(myCH, model = g0~1, buffer = 100, trace = FALSE) 
 
@@ -265,7 +265,7 @@ setwd("~/Programs/MRA/TestingVersion")
 # print(tmp)
 
 #fit1 <- nlminb(secr0$fit$par+ rnorm(3,0,.1), F.spat.loglik, ch=myCH, traps=attr(myCH,"traps"), buffer=100)
-fit2 <- optim(secr0$fit$par+ rnorm(3,0,.1), F.spat.loglik, ch=myCH, traps=attr(myCH,"traps"), buffer=100)
+#fit2 <- optim(secr0$fit$par+ rnorm(3,0,.1), F.spat.loglik, ch=myCH, traps=attr(myCH,"traps"), buffer=100)
 #print(fit2)
 # 
 # tmp2 <- secr.fit(myCH, model = g0~1, start=fit1$par, buffer = 100, details=list(LLonly=T))  

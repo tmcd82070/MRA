@@ -104,68 +104,68 @@ print(-ll)
 
 # =================================================================
 
-source("./../r/F.hug.loglik.r")
-source("./../r/F.collapse.secondaries.r")
-source("./../r/F.robust.open.part.r")
-
-fn <- "c:/Program Files (x86)/MARK/Examples/Robust Design Huggins.inp"
-ch <- read.table( fn, skip=3, colClasses=c("character","numeric",NULL), col.names=c("h","freq","sc"))
-chh <- NULL
-for(i in 1:nrow(ch)){
-  chh <- c(chh, rep(ch$h[i], ch$freq[i]))
-}
-
-ch.expand <-function(ch){
-  nc <- nchar(ch[1])
-  matrix(as.numeric(t(sapply(ch,substring,first=1:nc,last=1:nc))),length(ch))
-}
-CH <- array(NA,c(length(chh),5,5))
-CH[,1,1:2] <- ch.expand(substring(chh,1,2))
-CH[,2,1:2] <- ch.expand(substring(chh,3,4))
-CH[,3,1:4] <- ch.expand(substring(chh,5,8))
-CH[,4,1:5] <- ch.expand(substring(chh,9,13))
-CH[,5,1:2] <- ch.expand(substring(chh,14,15))
-
-cat("M(t+1):\n")
-print(apply(CH, 2, function(x){sum(rowSums(x,na.rm=T)>0)}))
-
-# beta <- c(0,0,0)
-# names(beta) <- c("p","s","g")
-# tmp <- F.robust.loglik( beta, CH)
-# print(tmp)
-
+# source("./../r/F.hug.loglik.r")
+# source("./../r/F.collapse.secondaries.r")
+# source("./../r/F.robust.open.part.r")
 # 
-# beta <- c(1.7140078, -1.9046820, 0.6841988, 0.4789440, 0.4296271, 0.4280551, -0.2745019)
-# names(beta) <- c("s","g",rep("p",5))
-# tmp <- F.robust.loglik( beta, CH)
-# print(tmp)
+# fn <- "c:/Program Files (x86)/MARK/Examples/Robust Design Huggins.inp"
+# ch <- read.table( fn, skip=3, colClasses=c("character","numeric",NULL), col.names=c("h","freq","sc"))
+# chh <- NULL
+# for(i in 1:nrow(ch)){
+#   chh <- c(chh, rep(ch$h[i], ch$freq[i]))
+# }
 # 
-#fit1 <- optim( beta, F.robust.loglik, ch=CH,  hessian=T, method="Nelder-Mead", control=list(reltol=1e-10, maxit=500))
-
-
-beta <-c(
-  2.0475783,
-  1.9063523,
-  1.2076639,
-  1.3484628,
-  -2.3646612,
-  -2.0140449,
-  -1.7334309,
-  0.6841976,
-  0.3841437,
-  0.4176103,
-  0.4364079,
-  -0.0943085)
-beta <- rep(0,4+3+5)
-names(beta)<-c(rep("s",4),rep("g",3),rep("p",5))
-
-#beta <- fit1$par
-
-# tmp <- F.robust.loglik( beta, CH)
-# print(tmp)
-
-
-fit2 <- optim( beta, F.robust.loglik, ch=CH,  hessian=T, method="BFGS", control=list(reltol=1e-10, maxit=1000))
+# ch.expand <-function(ch){
+#   nc <- nchar(ch[1])
+#   matrix(as.numeric(t(sapply(ch,substring,first=1:nc,last=1:nc))),length(ch))
+# }
+# CH <- array(NA,c(length(chh),5,5))
+# CH[,1,1:2] <- ch.expand(substring(chh,1,2))
+# CH[,2,1:2] <- ch.expand(substring(chh,3,4))
+# CH[,3,1:4] <- ch.expand(substring(chh,5,8))
+# CH[,4,1:5] <- ch.expand(substring(chh,9,13))
+# CH[,5,1:2] <- ch.expand(substring(chh,14,15))
+# 
+# cat("M(t+1):\n")
+# print(apply(CH, 2, function(x){sum(rowSums(x,na.rm=T)>0)}))
+# 
+# # beta <- c(0,0,0)
+# # names(beta) <- c("p","s","g")
+# # tmp <- F.robust.loglik( beta, CH)
+# # print(tmp)
+# 
+# # 
+# # beta <- c(1.7140078, -1.9046820, 0.6841988, 0.4789440, 0.4296271, 0.4280551, -0.2745019)
+# # names(beta) <- c("s","g",rep("p",5))
+# # tmp <- F.robust.loglik( beta, CH)
+# # print(tmp)
+# # 
+# #fit1 <- optim( beta, F.robust.loglik, ch=CH,  hessian=T, method="Nelder-Mead", control=list(reltol=1e-10, maxit=500))
+# 
+# 
+# beta <-c(
+#   2.0475783,
+#   1.9063523,
+#   1.2076639,
+#   1.3484628,
+#   -2.3646612,
+#   -2.0140449,
+#   -1.7334309,
+#   0.6841976,
+#   0.3841437,
+#   0.4176103,
+#   0.4364079,
+#   -0.0943085)
+# beta <- rep(0,4+3+5)
+# names(beta)<-c(rep("s",4),rep("g",3),rep("p",5))
+# 
+# #beta <- fit1$par
+# 
+# # tmp <- F.robust.loglik( beta, CH)
+# # print(tmp)
+# 
+# 
+# fit2 <- optim( beta, F.robust.loglik, ch=CH,  hessian=T, method="BFGS", control=list(reltol=1e-10, maxit=1000))
 
 ## THIS WORKS!!! I compared several models with same in MARK and with F.robust.loglik2.r and everything matches.  
 ##  fit2$par are the coefficient estimates

@@ -8,9 +8,10 @@ src-x64
 .RData
 .Rbuildignore
 mra.rproj
+.git
 Spatialtm
-archive
-HSL.library
+Archive/*.*
+HSL.library/*.*
 testingversion
 .gitignore
 .*\.gz$
@@ -18,3 +19,4 @@ testingversion
 .*\.mod$
 .*\.o$
 .*\.dll$
+.travis.yml
