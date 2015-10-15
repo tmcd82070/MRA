@@ -13,3 +13,9 @@ src-x64
 *.mod
 *.o
 *.dll
+*#*
+*.log
+*.aux
+*.blg
+*.dvi
+*.bbl
