@@ -28,9 +28,11 @@
 #' wherein emigration (gp) and immigration (gpp) depend upon whether an individual is on or off the 
 #' study area (see robust design literature for more details). 
 #'
-#' @parm ac.locs A nan X nprimary X 2 array of estimated activity center locations.  ac.locs[i,j,] = c(x,y) = coordinates of 
-#' activity center for animal i during primary occasion j.
-#'
+#' @parm ac.locs A nan X nprimary X 2 array of estimated activity center locations.  
+#' \code{ac.locs[i,j,]} = c(x,y) = coordinates of activity center for animal i
+#' during primary occasion j.  It is assumed that all locations are in valid habitat, so no checking against the 
+#'  habitat mask is performed here.
+#'  
 #' @param ch A 3-D array of capture histories.  Size is nan X nprim X nsecondaries.  Missing secondaries 
 #' are specified with columns of all NA's (i.e., if the 4th secondary of the ith primary was not done, 
 #' \code{all(is.na(ch[,i,4])) == TRUE}).  Cells in the array contain trap number that caught the individual.
@@ -51,7 +53,15 @@
 #' or a SpatialPoints object containing T(i,j) trap locations that were "on" during the j-th secondary occasion of the i-th primary. The trap location that caught 
 #' animal m during the j-th secondary of the i-th primary is \code{traps[[i]][[j]][ch[m,i,j],]}.
 #' 
-#'  @param hab.mask A SpatialPixels or SpatialPolygons object containing allowable locations for activity centers. 
+#'  @param hab.mask A SpatialPixels or SpatialGrid object (or their *DataFrame analogs) containing allowable locations for activity centers. 
+#'    Exactly like masks in the SECR package, \code{hab.mask} defines the outer limit of integration, defines 
+#'    sites that are habitat and thus can be occupied, descritizes habitat covariates for use in models.
+#'    The current implementation does not allow the habitat mask to change between primaries or secondaries. 
+#'    The mask is constant throughout the study.  Note that the area of each pixel (grid cell) is computed
+#'    as \code{prod(hab.mask@grid@cellsize)}, so \code{hab.mask} must be projected (e.g., in UTM's) 
+#'    and coordinates in \code{traps} must be in the same units.  Resulting density estimates 
+#'    are number of animals per squared unit of this system.  E.g., if using UTM coordinates in 
+#'    units of kilometers, density comes out as inidividuals per square kilometer. 
 #'     
 #'  @return The spatial (SECR) log likelihood. Note, at very last, log likelihood is 
 #'  multiply by -1 so this routine actually returns the negative of the log likelihood.  
@@ -76,6 +86,7 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
 
   if( !inherits(ch,"array") ) stop("ch must be an array")
   if( length(dim(ch)) != 3) stop(paste("ch must have 3 dimensions.", length(dim(ch)), "found."))
+  if( !inherits(hab.mask, "SpatialPixels") & !inherits(hab.mask, "SpatialGrid")) stop("hab.mask must be either a SpatialPixels or SpatialGrid object.")
   
   # Find dimensions                                 
   d <- dim(ch)
@@ -170,9 +181,14 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
 #   print(nsecondary)
 
   # Compute SECR likelihood for each occasion ========================
-  secrLL <- function(i,c.hist,b,ns,trps,mask,aclocs){
+  hab.pixel.area <- prod(hab.mask@grid@cellsize)
+    
+  secrLL <- function(i,c.hist,b,ns,trps,aclocs,pix.area){
     ch1 <- c.hist[,i,1:ns[i]]  # remove NA's here
     ch1 <- ch1[rowSums(ch1>0)>0,]    # remove all 0 lines here
+    
+    # Note, one cannot compute and return pdots here for later use in computing 
+    # pstar because uncaptured animals are dropped here. We need pstars for uncaptured animals.
     
     D.i.pos <- grep("^D",names(b))[i]
     g0.i.pos <- grep("^g0",names(b))[i]
@@ -180,18 +196,19 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
     trps <- trps[[i]]
     aclocs <- aclocs[,i,]
     
-    F.spat.loglik.X(b[c(D.i.pos, g0.i.pos, sigma.i.pos)],ch1,trps,mask,aclocs)
+    F.spat.loglik.X(b[c(D.i.pos, g0.i.pos, sigma.i.pos)],ch1,trps,aclocs,pix.area)
   }
+  
   closedLL <- sapply(1:nprimary,secrLL,
     c.hist=ch, 
     b=c(parms$D.eta, parms$g0.eta, parms$sigma.eta),
     ns=nsecondary, 
     trps=traps,
-    mask=hab.mask,
-    aclocs=ac.locs
-  )
+    aclocs=ac.locs, 
+    pix.area=hab.pixel.area
+  )  
   closedLL <- sum(closedLL)
-  
+
    cat(paste("SECR part:", closedLL, "\n"))
   
   
@@ -203,11 +220,7 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
   g0 <- 1/(1+exp(-parms$g0.eta))
   sigma <- exp(parms$sigma.eta)   # Note log link here, rather than logit
   
-#   p.star <- F.spatial.pstar(g0, sigma, traps, ch)   # returns nan X nprimary matrix or p.dots
-
-
-  p.star <- F.spatial.pstar2(g0, sigma, traps, ch, hab.mask)
-  
+  p.star <- F.spatial.pstar(g0, sigma, traps, ch)
   #print(p.star)
 
   # This returns the "real" log likelihood, not the negative

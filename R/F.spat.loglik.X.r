@@ -21,13 +21,16 @@
 #'    habitat mask is needed.  Size of habitat mask is calculated by assuming all habitat points 
 #'    are centered in habitat pixels, and all habitat pixels are the same size. Size of habitat mask 
 #'    is calculated as number of pixels times \code{mask.pixel.area}.  Everything is unitless except this
-#'    parameter.  density is per 1 unit of this parameter.   
+#'    parameter.  Density is per 1 unit of this parameter.  For example, if \code{mask.pixel.area} is 
+#'    in hectares, final density parameters are number of individuals per hectare.  It is incumbent 
+#'    on the user to understand this and get it right.  
+#'        
 #'  @param type Type of trap, as defined by SECR. 
 #'     
-#'  @return The spatial (SECR) log likelihood. Note, at very last, log likelihood is 
-#'  multiply by -1 so this routine actually returns the negative of the log likelihood.  
-#'  This is done so that optim() can minimize and hessian estimation is correct.
-#'  
+#'  @return The negative of the spatial (SECR) log likelihood. Negative is returned so 
+#'    so  minimizers like \code{optim}  can be applied directly and (more importantly) 
+#'    the hessian estimation is correct.
+#'    
 #'  @details   This routine using the notation of Borchera and Efford (2008) "Spatially 
 #'  Explicit Maximum Likelihood Methods for Capture–Recapture Studies", Biometrics, v64, 377-385.
 #'
@@ -35,6 +38,8 @@
 #' capture-recapture: likelihood-based methods", by Efford, Borchers, and Byrom. This is unpublished, I think.
 #' Either I don't fully comprehend, or this paper has some ommisions and is therefore less helpful. 
 #' This paper is for the homogenous Poisson case only. 
+#' 
+#' @examples 
 
 
 F.spat.loglik.X <- function( beta, ch, traps, aclocs, mask.pixel.area=1, type="multi" ){
@@ -45,98 +50,15 @@ F.spat.loglik.X <- function( beta, ch, traps, aclocs, mask.pixel.area=1, type="m
   # Check for size restraints
   if( nrow(ch) != nrow(aclocs))  stop("Number of rows in ch must equal number of rows in aclocs.")
   
-  # Basic sizes
-  ns <- ncol(ch)
-  nan <- nrow(ch)
-  K <- nrow(traps)  # number of traps
+  # Compute probabilties given beta and trap configuration at all locations ============
+  capProbs <- F.spat.capProbs(beta, traps, aclocs, type, return.cellp=TRUE)
+  p. <- capProbs$pdot
+  p.s <- capProbs$p.s
+  p_ks <- capProbs$p_ks
   
-  # Pull parameters from beta
-  D <- exp(beta[1])
-  g0 <- exp(beta[2])/(1+exp(beta[2]))
-  sigma <- exp(beta[3])
-  
-
-#   # Set locations where home ranges can be. ===================================
-#   Xxx <- seq(min(traps[,1])-buffer, max(traps[,1])+buffer, length=50 )
-#   Xyy <- seq(min(traps[,2])-buffer, max(traps[,2])+buffer, length=50 )
-#   X <- expand.grid( x=Xxx, y=Xyy )
-#   T <- nrow(X)   # number of HR center locations
-  
-  
-  # Compute distance from AC location to  every trap =====
-  T <- nan   # number of AC center locations = number of animals
-  ACx <- matrix(aclocs[,1], T, K)
-  ACy <- matrix(aclocs[,2], T, K)
-  Tx <- matrix(traps[,1], T, K, byrow=T)
-  Ty <- matrix(traps[,2], T, K, byrow=T)
-  
-
-  d <- sqrt( (ACx-Tx)^2 + (ACy-Ty)^2 )  # rows=AC location = individual; cols=Trap location
-  
-  # Apply distance function ===================================================
-  # Eventually, make this a call to a function that is passed in. i.e., add d.fund= parameter to this function call
-  g <- g0*exp(-d^2/(2*(sigma^2)))
-
-#   # This is how you plot the distance function for one trap
-#     trp <- 1
-#     par(pty="s")
-#     image(Xxx,Xyy, matrix(g[,trp],length(Xxx)), main=paste("g for trap", trp))
-#     points(traps[,1],traps[,2])
-   
-  # Make p_ks into a 3D array to account for occasions. dimensions are HR.centers (T) X Traps (K) X Session (ns)
-  g <- array( g, c(T,K,ns) )
-  
-  # Compute trap hazard functions =============================================
-  # This is trap hazard for animals at each HR center at each trap on occasion s. 
-  if( type == "proximity"){
-    # Do nothing: THIS NOT CORRECT. 
-  } else if( type == "multi"){
-    # Compute competing risks hazard-rate
-    h.k <- -log(1 - g)  # trap hazards 
-    h.  <- apply(h.k,c(1,3),sum)  # sum over K = traps.  this is T x ns
-    T_s <- 1  # Not needed, but just to remember could make occasion specific changes to p.s here.
-    p.s  <- 1-exp(-T_s*h.)  # this is T x ns
-    
-#     # debugging
-#     par(pty="s")
-#     for( j in 1:ns ){
-#       image(Xxx,Xyy, matrix(p.s[,j],length(Xxx)), main=j)
-#       points(traps[,1],traps[,2])
-#     }
-    
-    p_ks <- array( apply(p.s/h., 2, rep, times=K), c(T,K,ns)) # See note in paper.  I think T_s should be here. 
-                                                              # I think should be p.s/h. rather than (1-exp(-h.))/h.
-                                                              # Plus, make matrix same size as individual hazard mat, so can multiply next
-    p_ks <- p_ks*h.k  # this is p.s multiplied by proportion of trap hazard, this is T X K X ns
-    
-#     image(Xxx,Xyy, matrix(p_ks[,1,2],length(Xxx)), col=topo.colors(20))
-#     points(traps[,1],traps[,2], pch=16, col=0)
-#     image(Xxx,Xyy, matrix(h.k[,1,2],length(Xxx)), col=terrain.colors(20))
-#     points(traps[,1],traps[,2], pch=16, col=0)
-#     
-#     image(Xxx,Xyy, matrix(p_ks[,55,2],length(Xxx)), col=topo.colors(20))
-#     points(traps[,1],traps[,2], pch=16, col=0)
-#     image(Xxx,Xyy, matrix(p_ks[,100,2],length(Xxx)), col=topo.colors(20))
-#     points(traps[,1],traps[,2], pch=16, col=0)
-  }
-  
-  # compute p. ===============================================================
-  # Probability of being caught at least once over ns occasions for all T locations
-  # CHECK: This p. agrees with secr's pdot() function.
-  p. <- 1 - apply(1-p.s,1,prod)  # this is T x 1
-
-  assign("tmp.mypdot", p., pos=.GlobalEnv)
-#
-#   print(p.[50*9+9])
-#   points(X[50*9+9,],col="blue",pch=16)
-# 
-#    par(pty="s")
-#    #image(Xxx,Xyy, matrix(p.,length(Xxx)), main="p.", xlim=c(300,400),ylim=c(300,400))
-#    contour(Xxx,Xyy, matrix(p.,length(Xxx)), main="p.", levels=(.9), xlim=c(300,400),ylim=c(300,400))
-#    points(traps[,1],traps[,2])  
-
-  # Compute Probability of capture histories =================================
-  # Need p_ks and p.s here.
+ 
+  # Compute Probability of capture histories ===========================================
+  # Need p_ks and p.s and ch here.
   # tmp <- TRUE   # debugging only
   
   p.omega <- rep(NA,nan)  # length = # animals = one p.omega for each animal's location
@@ -231,8 +153,9 @@ F.spat.loglik.X <- function( beta, ch, traps, aclocs, mask.pixel.area=1, type="m
 #   logL <- nan*log(Da) - Da  + sum(log(p.omega)) - nan*log(a)                                                                                              
   logL <- nan*log(D*mask.pixel.area) - (D*mask.pixel.area*a/nan)  + sum(log(p.omega))                                                                                               
   
-   print(c(beta,-logL ))
+#   print(c(beta,-logL ))
 
+  # Return negative log likelihood
   -logL
   
 }
@@ -282,26 +205,26 @@ F.spat.loglik.X <- function( beta, ch, traps, aclocs, mask.pixel.area=1, type="m
 # 
 # ## Conclusion: when mask has one point in it, SECR and F.spat.loglik.X differ by a constant 
 # ## for every observation.  Plot above shows a straight line, and apply(ll,1,function(x){diff(x)}) is constant.
-
-
-# Compare SECR and my likelihood for different values of parameters ----------
-m <- make.grid(nx=1, ny=1, spacing = 30, originxy = c(500,500))
-m <- make.mask(m, nx=1,ny=1)
-
-
-ch01 <- myCH[2,]
-ch01 <- myCH
-dim(ch01) <- c(nrow(ch01),ncol(myCH))
-attr(ch01, "traps") <- attr(myCH,"traps")
-attr(ch01, "session") <- attr(myCH,"session")
-attr(ch01, "inject.time") <- rep(0, sum(ch01>0))
-class(ch01)<- class(myCH)
-
-secr0 <- secr.fit(ch01, model = g0~1, mask=m, start=c(2.953150, -4.652265, 16.590712)) 
-
-acs <- matrix( as.numeric(m), nrow(ch01), 2, byrow = TRUE)
-
-fit0 <- optim( c(2.953150, -4.652265, 16.590712), F.spat.loglik.X, ch=ch01, aclocs=acs, traps=traps(ch01), mask.pixel.area=attr(m,"area"), method="L-BFGS-B", hessian = TRUE, control=list(factr=5e9, pgtol=1e-8, maxit=1000))
+# 
+# 
+# # Compare SECR and my likelihood for different values of parameters ----------
+# m <- make.grid(nx=1, ny=1, spacing = 30, originxy = c(500,500))
+# m <- make.mask(m, nx=1,ny=1)
+# 
+# 
+# ch01 <- myCH[2,]
+# ch01 <- myCH
+# dim(ch01) <- c(nrow(ch01),ncol(myCH))
+# attr(ch01, "traps") <- attr(myCH,"traps")
+# attr(ch01, "session") <- attr(myCH,"session")
+# attr(ch01, "inject.time") <- rep(0, sum(ch01>0))
+# class(ch01)<- class(myCH)
+# 
+# secr0 <- secr.fit(ch01, model = g0~1, mask=m, start=c(2.953150, -4.652265, 16.590712)) 
+# 
+# acs <- matrix( as.numeric(m), nrow(ch01), 2, byrow = TRUE)
+# 
+# fit0 <- optim( c(2.953150, -4.652265, 16.590712), F.spat.loglik.X, ch=ch01, aclocs=acs, traps=traps(ch01), mask.pixel.area=attr(m,"area"), method="L-BFGS-B", hessian = TRUE, control=list(factr=5e9, pgtol=1e-8, maxit=1000))
 # 
 # par.vec <- secr0$fit$par
 # D.vec <- seq(0.5*par.vec[1], 1.5*par.vec[1], length=40)
