@@ -1,6 +1,42 @@
-# F.spat.loglik -----
+#' @title Compute spatially expliciate capture-recapture log likelihood
+#'
+#'  @description Given a set of activity center locations (mask), this routine computes the homogenous possion process liklihood. No covariates can be used at this time.
+#'
+#'  @param beta Coefficients to use when computing log likelihood.  This should be of length 3.  First element is
+#'     log transform of density, second element is logit transform of g0, and third element is log transform of sigma.
+#'
+#'  @param ch  Data.frame of capture histories, size number of unique animals (nan) by number of secondaries (ns). The columns of ch should correpsond to each secondary occation, assumed to be in order. The rows of ch should correspond to a single animals capture history.  ch[i,j] = 0 if animal i was uncaptured during  occasion j. ch[i,j] = x (where x integer > 0) means animal i was captured at occasion j in trap x which has coordinates traps[x,].
+#'
+#'
+#'
+#'  @param traps  Data.frame of trap coordinates, size is K X 2. names(traps) should be 'x' and 'y'.
+#'
+#'
+#'
+#'  @param mask.pixel.area Size of every pixel in the habitat mask.  To calculate density, size of the
+#'    habitat mask is needed.  Size of habitat mask is calculated by assuming all habitat points
+#'    are centered in habitat pixels, and all habitat pixels are the same size. Size of habitat mask
+#'    is calculated as number of pixels times \code{mask.pixel.area}.  Everything is unitless except this
+#'    parameter.  density is per 1 unit of this parameter.
+#'  @param type Type of trap, as defined by SECR. Note, currently only works for type='multi' the default.
+#'
+#'  @return The spatial (SECR) log likelihood. Note, at very last, log likelihood is
+#'  multiply by -1 so this routine actually returns the negative of the log likelihood. Note, constants, such as the multinomial coefficient, are not included in the likelihood.
+#'  This is done so that optim() can minimize and hessian estimation is correct.
+#'
+#'  @details   This routine using the notation of Borchera and Efford (2008) "Spatially
+#'  Explicit Maximum Likelihood Methods for Capture–Recapture Studies", Biometrics, v64, 377-385.
+#'
+#' Another paper, with some ommisions I think, is "Density Estimation by spatially explicit capture-recapture: likelihood-based methods", by Efford, Borchers, and Byrom. This is unpublished, I think.
+#' Either I don't fully comprehend, or this paper has some ommisions and is therefore less helpful.
+#' This paper is for the homogenous Poisson case only.
 
-F.spat.loglik <- function( beta, ch, traps, buffer, type="multi",convertArea=1,mask=NULL){
+
+
+
+## F.spat.loglik -----
+
+F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi"){
   #
   # Compute closed population SECR likelihood for spatial capture models
   #
@@ -39,37 +75,24 @@ F.spat.loglik <- function( beta, ch, traps, buffer, type="multi",convertArea=1,m
   nan <- nrow(ch) # number of animals
   K <- nrow(traps)  # number of traps
 
-  # Pull parameters from beta
+  ## Pull parameters from beta
   D <- exp(beta[1])
   g0 <- exp(beta[2])/(1+exp(beta[2]))
   sigma <- exp(beta[3])
 
 
 
-  if(is.null(mask)){
-  # Set locations where home ranges can be. ===================================
-  Xxx <- seq(min(traps[,1])-buffer, max(traps[,1])+buffer, length=50 )
-  Xyy <- seq(min(traps[,2])-buffer, max(traps[,2])+buffer, length= 50)
-  X <- expand.grid( x=Xxx, y=Xyy )
-
-
-#######################################
-  ## this assumes the habitat mask is a rectangle
-  area <- (max(X[,1])-min(X[,1]))*(max(X[,2])-min(X[,2]))/nrow(X)/convertArea
-
-#######################################
-} else {
-    X <- data.frame(x=mask$x,y=mask$y)
-    area <- attr(mask,'area')
-}
+  ## mask should be data.frame with column names x and y
+  ## these are the locations of the points in the habitat mask
+  X <- mask
 
   T <- nrow(X)   # number of HR center locations
 
   # Compute distance from every potential home range center to every trap =====
   Xx <- matrix(X$x, T, K)
   Xy <- matrix(X$y, T, K)
-  Kx <- matrix(traps[,1], T, K, byrow=T)
-  Ky <- matrix(traps[,2], T, K, byrow=T)
+  Kx <- matrix(traps$x, T, K, byrow=T)
+  Ky <- matrix(traps$y, T, K, byrow=T)
 
   d <- sqrt( (Xx-Kx)^2 + (Xy-Ky)^2 )  # rows=HRlocation; cols=Trap location
 
@@ -160,7 +183,7 @@ F.spat.loglik <- function( beta, ch, traps, buffer, type="multi",convertArea=1,m
 #     }
 
     if( any(omega.i==0) ){
-      pUncap <- (1 - p.s)[,which(omega.i==0),drop=FALSE]        # this is T X (num times i not captured)
+      pUncap <- (1 - p.s)[,which(omega.i==0),drop=FALSE]# this is T X (num times i not captured)
       pUncap <- apply(pUncap,1,prod)
     } else {
       pUncap <- rep(1,T)
@@ -187,11 +210,12 @@ F.spat.loglik <- function( beta, ch, traps, buffer, type="multi",convertArea=1,m
 #   }
 
   # Compute frequencies of capture histories.  Not sure this is needed =======
-  md <- ceiling(log10(nan))   # number of digits needed for nan
-  n.freq <- table(apply(ch, 1, function(x,md){
-    x <- formatC(x,width=md,flag=0);
-    paste(x, collapse=".")},
-    md=2))
+  ## This is only needed for the multinomial coefficient of the likelihood
+  ## md <- ceiling(log10(nan))   # number of digits needed for nan
+  ## n.freq <- table(apply(ch, 1, function(x,md){
+  ##   x <- formatC(x,width=md,flag=0);
+  ##   paste(x, collapse=".")},
+  ##   md=2))
 
 #   # The following computes capture frequencies without regard to traps, just captures
 #   n.freq <- matrix(as.numeric(ch>0),nan)
@@ -221,9 +245,9 @@ F.spat.loglik <- function( beta, ch, traps, buffer, type="multi",convertArea=1,m
   # total probability of capture (integeral of capture function
   # over all HR center locations)
 
-  ## area give a units
+  ## area give units to a
   ## currently assumes that area is the same for each point in the mask
-  a <- sum(p.)*area
+  a <- sum(p.)*mask.pixel.area
   Da <- D*a
   #print(Da)
   # straight likelihood: L <- ((Da)^nan * exp(-Da) / factorial(nan)) * factorial(nan)/prod(factorial(n.freq)) * prod(colSums(p.omega*p.)) / a  # factorial(nan)'s cancel
@@ -231,9 +255,9 @@ F.spat.loglik <- function( beta, ch, traps, buffer, type="multi",convertArea=1,m
   logL <- nan*log(Da) - Da  - lfactorial(nan) + sum(log(colSums(p.omega))) - nan*log(a)
 
 
-  print(c(beta,area,-logL))
+  ##print(c(beta,area,-logL))
 
-  -logL
+  return(-logL)
 
 }
 
