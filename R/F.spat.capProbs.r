@@ -5,8 +5,9 @@
 #'  computes probability of capture by each trap each occasion (i.e., computes p_ks) and 
 #'  probability of capture each secondary (i.e., computes p.s). 
 #'  
-#'  @param beta  A named vector of coefficient estimates.  See \code{F.spat.loglik.X} for 
-#'    description of structure.  Should be lenght 3.
+#'  @param beta  A named vector of coefficient estimates in transformed (linear) space.   
+#'    See \code{F.spat.loglik.X} for 
+#'    description of structure.  Should have at least named elements "g0" and "sigma".
 #'    
 #'  @param traps A list of lists. It is assumed that the locations 
 #'    of "on" traps varied amoungst occasions. In this case, each element of  the list is 
@@ -52,8 +53,9 @@ F.spat.capProbs <- function(beta, traps, aclocs, type="multi", return.occasionp=
   K.max <- max(unlist(lapply(traps,nrow)))  # maximum number of traps used during an occasion
   
   # Pull parameters from beta. # COULD EASILY MAKE THIS SECONDARY DEPENDENT BY PUTTING THIS IN K LOOP BELOW.
-  g0 <- exp(beta[2])/(1+exp(beta[2]))
-  sigma <- exp(beta[3])
+  # Pull using names so beta could be in any order
+  g0 <- exp(beta["g0"])/(1+exp(beta["g0"]))
+  sigma <- exp(beta["sigma"])
   
   
   # Compute occasion specific g = trap distance functions. =========

@@ -57,7 +57,8 @@
 #'    Exactly like masks in the SECR package, \code{hab.mask} defines the outer limit of integration, defines 
 #'    sites that are habitat and thus can be occupied, descritizes habitat covariates for use in models.
 #'    The current implementation does not allow the habitat mask to change between primaries or secondaries. 
-#'    The mask is constant throughout the study.  Note that the area of each pixel (grid cell) is computed
+#'    The mask is constant throughout the study.  
+#'    Note that the area of each pixel (grid cell) is computed
 #'    as \code{prod(hab.mask@grid@cellsize)}, so \code{hab.mask} must be projected (e.g., in UTM's) 
 #'    and coordinates in \code{traps} must be in the same units.  Resulting density estimates 
 #'    are number of animals per squared unit of this system.  E.g., if using UTM coordinates in 
@@ -184,17 +185,20 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
   hab.pixel.area <- prod(hab.mask@grid@cellsize)
     
   secrLL <- function(i,c.hist,b,ns,trps,aclocs,pix.area){
-    ch1 <- c.hist[,i,1:ns[i]]  # remove NA's here
-    ch1 <- ch1[rowSums(ch1>0)>0,]    # remove all 0 lines here
+
+    ch1 <- c.hist[,i,1:ns[i]]  # histories from ith primary
+    caught.this.primary <- rowSums(ch1>0)>0  # animals caught this primary
+    ch1 <- ch1[caught.this.primary,]    # remove all 0 lines here
+    aclocs <- aclocs[caught.this.primary,i,]  # ac locations of animals caught this primary
     
     # Note, one cannot compute and return pdots here for later use in computing 
-    # pstar because uncaptured animals are dropped here. We need pstars for uncaptured animals.
+    # pstar because uncaptured animals are dropped here. We need pstars for even uncaptured animals.
+    # Hence, the call to F.spatial.pstar later.
     
     D.i.pos <- grep("^D",names(b))[i]
     g0.i.pos <- grep("^g0",names(b))[i]
     sigma.i.pos <- grep("^sigma",names(b))[i]
     trps <- trps[[i]]
-    aclocs <- aclocs[,i,]
     
     F.spat.loglik.X(b[c(D.i.pos, g0.i.pos, sigma.i.pos)],ch1,trps,aclocs,pix.area)
   }

@@ -39,9 +39,18 @@
 #' or a SpatialPoints object containing T(i,j) trap locations that were "on" during the j-th secondary occasion of the i-th primary. The trap location that caught 
 #' animal m during the j-th secondary of the i-th primary is \code{traps[[i]][[j]][ch[m,i,j],]}.
 #' 
-#' @param hab.mask A \code{SpatialPixels} or \code{SpatialPolygons} object containing valid locations
-#' for activity centers. 
-
+#'  @param hab.mask A SpatialPixels or SpatialGrid object (or their *DataFrame analogs) containing allowable 
+#'    locations for activity centers. 
+#'    Exactly like masks in the SECR package, \code{hab.mask} defines the outer limit of integration, defines 
+#'    sites that are habitat and thus can be occupied, descritizes habitat covariates for use in models.
+#'    The current implementation does not allow the habitat mask to change between primaries or secondaries. 
+#'    The mask is constant throughout the study.  
+#'    Note that the area of each pixel (grid cell) is computed
+#'    as \code{prod(hab.mask@grid@cellsize)}, so \code{hab.mask} must be projected (e.g., in UTM's) 
+#'    and coordinates in \code{traps} must be in the same units.  Resulting density estimates 
+#'    are number of animals per squared unit of this system.  E.g., if using UTM coordinates in 
+#'    units of kilometers, density comes out as inidividuals per square kilometer. 
+#'
 #' @details  This function estimates activity center locations given trapped locations using maximum likelihood. 
 #' It finds the (X,y) location which maximized the probability of obsevering the capture history. 
 #' 
@@ -148,9 +157,13 @@ F.AC.estim <- function( beta, ch, traps, hab.mask){
       # print(ac.fit)
       
       if( ac.fit$convergence == 0){
-        ac.loc <- F.check.mask( ac.fit$par, hab.mask )  # check that location is in habitat defined by hab.mask.  If not,
-                                                        # move to nearest habitat location.
-        ac.locs[i,j,] <- ac.loc
+        if( !all(h==0) ){
+          # Animal was seen.  ac.fit may not be in habitat. Check and move it to habitat point with highest loglik. 
+          ac.locs[i,j,] <- F.move.2.habitat(ac.fit$par, hab.mask, h, trapsj, g0[j], sigma[j])
+        } else {
+          # un seen animals AC is not required to be in habitat
+          ac.locs[i,j,] <- ac.fit$par
+        }
       } else {
         stop("No AC location for animal ",i,"during primary occasion",j,"\nConvergence code=",ac.fit$convergence)
       }

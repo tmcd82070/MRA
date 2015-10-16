@@ -4,8 +4,11 @@
 #'  @description Given a set of activity center locations, this routine computes the 
 #'  liklihood for a set of coefficients.  
 #'  
-#'  @param beta Coefficients to use when computing log likelihood.  This should be of length 3.  First element is 
-#'     log transform of density, second element is logit transform of g0, and third element is log transform of sigma.
+#'  @param beta A named vector of coefficients in the transformed (linear) space 
+#'  to use when computing log likelihood.  This should be of length 3.  
+#'  First element is log transform of density (named "D"), second element is logit transform of 
+#'  g0 (named "g0"), 
+#'  and third element is log transform of sigma (named "sigma").
 #'  
 #'  @param ch  Matrix of capture histories, size nan X ns.  ch[i,j] = 0 if animal i was uncaptured during 
 #'     occasion j. ch[i,j] = x (where x integer > 0) means animal i was captured 
@@ -13,10 +16,13 @@
 #'     a SpatialPointDataFrame where points are coordinates of traps where each 
 #'     animal was caught and data frame contains animalID and occasion of capture. From
 #'     that info, we could construct this ch matrix.
+#'     
 #'  @param traps  Matrix of trap coordinates, size is K X 2.  
+#'  
 #'  @param aclocs A nan X 2 matrix of (estimated) activity center locations to use in evaluating the 
 #'  likelihood. It is assumed that all locations are in valid habitat, so no checking against the 
 #'  habitat mask is performed here.
+#'  
 #'  @param mask.pixel.area Size of every pixel in the habitat mask.  To calculate density, size of the
 #'    habitat mask is needed.  Size of habitat mask is calculated by assuming all habitat points 
 #'    are centered in habitat pixels, and all habitat pixels are the same size. Size of habitat mask 
@@ -143,6 +149,8 @@ F.spat.loglik.X <- function( beta, ch, traps, aclocs, mask.pixel.area=1, type="m
   # Compute a = integral of p.(X) over possible HR centers
   # total probability of capture (integeral of capture function
   # over all HR center locations)
+  
+  D <- exp(beta["D"])
   
    a <- sum(p.)  # this assumes all pixels in the same size
 # 
