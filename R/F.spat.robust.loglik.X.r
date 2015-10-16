@@ -1,25 +1,27 @@
-#' @title Compute spatial robust-design log likelihood given estimated activity center locations. Use this 
-#' during the  "M" step of the EM algorithm
+#' @title Spatial robust-design log likelihood. 
 #' 
 #'  @description Given a set of activity center locations, this routine computes the 
-#'  spatial robust design likelihood for a set of coefficients.  
+#'  spatial robust design likelihood for a set of coefficients. Use this 
+#'  during the  "M" step of the EM algorithm
 #'  
 #' @param beta A named vector of coefficient estimates.  
 #' Names and number of elements should be as follows:  
-#' . "surv?" (survival) = (nprimary-1) elements corresponding to intervals between primary occasions
-#' . "gp?" (gamma prime, emigration) = (nprimary-1) elements corresponding to intervals between primary occasions.
-#' . (Optional) "gpp?" (gamma prime prime, immigration) = (nprimary - 2) elements corresponding to intervals between 
+#' \itemize{
+#'  \item "surv?" (survival) = (nprimary-1) elements corresponding to intervals between primary occasions
+#'  \item "gp?" (gamma prime, emigration) = (nprimary-1) elements corresponding to intervals between primary occasions.
+#'  \item (Optional) "gpp?" (gamma prime prime, immigration) = (nprimary - 2) elements corresponding to intervals between 
 #'    2nd primary and the last.  Recall there is no immigration parameter for the interval between primary 1 and 2. 
-#' . "D?" (density) = nprimary elements. 
-#' . "g0?" (capture probability at traps) = nprimary elements
-#' . "sigma?" (capture probability width) = nprimary elements.
+#'  \item "D?" (density) = nprimary elements. 
+#'  \item "g0?" (capture probability at traps) = nprimary elements
+#'  \item "sigma?" (capture probability width) = nprimary elements.
+#' }
 #' 
 #' Current implementation allows constant or complete time variation (small t).  For constant model, 
 #' beta has length 5 or 6 (6 if Markov emigration). For small t model, length of beta is either (5*nprimary - 2) or
 #' (6*nprimary - 4).  
 #' For example, in a problem with 4 primaries and 5 secondaries in each primary, and no gpp elements, beta 
-#' should have length 18 = 3 + 3 + 4 + 4 + 4 and be named \code{c("surv1", "surv2", surv3", "gp1", "gp2",     
-#' "gp3", "D1", "D2", "D3", "D4", "g01", "g02", "g03", "g04", "sigma1", "sigma2", "sigma3", "sigma4")}.  Note that 
+#' should have length 18 = 3 + 3 + 4 + 4 + 4 and be named c("surv1", "surv2", surv3", "gp1", "gp2",     
+#' "gp3", "D1", "D2", "D3", "D4", "g01", "g02", "g03", "g04", "sigma1", "sigma2", "sigma3", "sigma4").  Note that 
 #' order does not matter because elements are all named. 
 #' If length of \code{beta} is 5*nprimary - 2, this routine assume that the 'random emigration' 
 #' model is being fitted wherein emigration probability (gp) and immigration 

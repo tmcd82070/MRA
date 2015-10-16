@@ -1,6 +1,27 @@
-# Purpose ===========
-#   An objective function for estimating activity center given captures
-#
+#'  @title Likelihood location contains activity center. 
+#'  
+#'  @description Computes the likelihood that a particular location is 
+#'  a (latent, unobserved) activity center location.  This is 
+#'   the objective function for estimating activity center given captures. 
+#'
+#'  @param x A 2 X 1 vector containing (x,y) coordinates of the location (i.e., the potential 
+#'    activity center location). 
+#'    
+#'  @param h A ns X 1 vector of trap capture history.  Element i is either 0 if individual went
+#'    uncaptured, or the row number in \code{traps} of the trap that caught the individual.
+#'    
+#'  @param traps A list of trap location matricies.  Length of \code{traps} is ns = number of occasions. 
+#'    Each element of \code{traps} is a T X 2 matrix of trap locations.  Trap location that caught 
+#'    the individual associated with history \code{h} during occasion j is \code{traps[[j]][h[j],]}.
+#'    
+#'  @param g0 Vector of distance function intercept values
+#'  
+#'  @param sigma Vector of distance function width values
+#'  
+#'  @return The negative log likelihood that location \code{x} is the activity center 
+#'    of the animal with history \code{h} in 
+#'    traps defined by \code{traps},  given distance function parameters \code{g0} and \code{sigma}. 
+#'    
 
 F.X.loglik <- function(x, h, traps, g0, sigma){
   # x = location of AC (2 X 1)

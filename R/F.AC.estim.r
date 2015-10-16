@@ -86,27 +86,12 @@ F.AC.estim <- function( beta, ch, traps, hab.mask){
 
   # Fix up beta vector --------------------------------
   # Extract coefficients from beta vector. Note, only time varying models here. No covariates or individual variation.
-  g0 <- beta[["g0"]]  # vector length nprimary
-  sigma <- beta[["sigma"]]  # vector length nprimary
+  g0 <- beta$g0  # vector length nprimary
+  sigma <- beta$sigma  # vector length nprimary
   
     
-  # Replicate traps object if necessary ---------------
-  if( "SpatialPoints" %in% class(traps)){
-    # All traps on all the time
-    trps <- vector("list",nprimary)
-    for(j in 1:nprimary){
-      trps[[j]] <- rep(list(traps), nsecondary[j])
-    }
-    traps<-trps
-  } else { 
-    # Check length of traps list
-    for( j in 1:nprimary){
-      if(length(traps[[j]]) != nsecondary[j]) {
-        stop("Length of trap list for primary occasion ", j, 
-             " does not equal number of secondary occasions (", nsecondary[j], " secondaries found)")
-      }
-    }
-  }
+  traps <- F.fixup.traps( traps, nprimary, nsecondary )
+  
   
 #   print(length(traps))
 #   print(length(traps[[1]]))

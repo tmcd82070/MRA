@@ -20,3 +20,5 @@ man/F.spat.capProbs.Rd
 man/F.spat.loglik.X.Rd
 man/F.spat.robust.loglik.X.Rd
 man/F.spatial.pstar.Rd
+man/F.X.loglik.Rd
+man/F.fixup.traps.Rd
