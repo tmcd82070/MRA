@@ -32,7 +32,7 @@
 #'    \item{pdot}{A vector of size \code{nan == nrow(aclocs)} containing probability of capture 
 #'    for an animal at the corresponding location.  i.e., estimated probability of capture for 
 #'    animal at location \code{aclocs[i,]} at least 
-#'    once in the trap grid is \code{pdot[i]}}.  \code{pdot} is useful 
+#'    once in the trap grid is \code{pdot[i]}.  \code{pdot} is useful 
 #'    for computing activity center locations, p.stars in robust designs, etc. }
 #'    
 #'    \item{p.s}{If \code{return.cellp} == TRUE, a matrix of size 

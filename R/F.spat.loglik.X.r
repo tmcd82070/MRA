@@ -45,7 +45,6 @@
 #' Either I don't fully comprehend, or this paper has some ommisions and is therefore less helpful. 
 #' This paper is for the homogenous Poisson case only. 
 #' 
-#' @examples 
 
 
 F.spat.loglik.X <- function( beta, ch, traps, aclocs, mask.pixel.area=1, type="multi" ){

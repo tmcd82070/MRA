@@ -4,7 +4,7 @@
 #'  to estimate parameters.  This is the "M" step of the EM algorithm. 
 #'  
 #'
-#' @parm ac.locs A nan X nprimary X 2 array of estimated activity center locations.  ac.locs[i,j,] = c(x,y) = coordinates of 
+#' @param ac.locs A nan X nprimary X 2 array of estimated activity center locations.  ac.locs[i,j,] = c(x,y) = coordinates of 
 #' activity center for animal i during primary occasion j.
 #'
 #' @param ch A 3-D array of capture histories.  Size is nan X nprim X nsecondaries.  Missing secondaries 
@@ -70,29 +70,5 @@ F.parm.estim <- function(ac.locs, ch, traps, beta.init){
                 hessian = TRUE, control=list(factr=5e9, pgtol=1e-8, maxit=1000))
   
   
-  This goies in F.spat.robust.loglik.X
-  
-  # Compute SECR likelihood for each occasion ========================
-  # For now, SECR parameters are constant accross (primary) sessions 
-  closedLL <- sapply(1:nprimary,function(i,c.hist,b,ns,trps,mask){
-    ch1 <- c.hist[,i,1:ns[i]]  # remove NA's here
-    ch1 <- ch1[rowSums(ch1>0)>0,]    # remove all 0 lines here
-    
-    D.i.pos <- grep("^D",names(b))[i]
-    g0.i.pos <- grep("^g0",names(b))[i]
-    sigma.i.pos <- grep("^sigma",names(b))[i]
-    
-    F.spat.loglik2(b[c(D.i.pos, g0.i.pos, sigma.i.pos)],ch1,trps,mask)
-  },
-  c.hist=ch, 
-  b=c(parms$D.eta, parms$g0.eta, parms$sigma.eta),
-  ns=nsecondary, 
-  trps=traps,
-  mask=hab.mask
-  )
-  closedLL <- sum(closedLL)
-  
-  #   cat(paste("SECR part:", closedLL, "\n"))  
-  
-  
+  fit$par
 }  

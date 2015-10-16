@@ -28,7 +28,7 @@
 #' wherein emigration (gp) and immigration (gpp) depend upon whether an individual is on or off the 
 #' study area (see robust design literature for more details). 
 #'
-#' @parm ac.locs A nan X nprimary X 2 array of estimated activity center locations.  
+#' @param ac.locs A nan X nprimary X 2 array of estimated activity center locations.  
 #' \code{ac.locs[i,j,]} = c(x,y) = coordinates of activity center for animal i
 #' during primary occasion j.  It is assumed that all locations are in valid habitat, so no checking against the 
 #'  habitat mask is performed here.
@@ -59,10 +59,11 @@
 #'    The current implementation does not allow the habitat mask to change between primaries or secondaries. 
 #'    The mask is constant throughout the study.  
 #'    Note that the area of each pixel (grid cell) is computed
-#'    as \code{prod(hab.mask@grid@cellsize)}, so \code{hab.mask} must be projected (e.g., in UTM's) 
+#'    as \code{prod(data.frame(getGridTopology(hab.mask))$cellsize)}, 
+#'    so \code{hab.mask} must be projected (e.g., in UTM's) 
 #'    and coordinates in \code{traps} must be in the same units.  Resulting density estimates 
 #'    are number of animals per squared unit of this system.  E.g., if using UTM coordinates in 
-#'    units of kilometers, density comes out as inidividuals per square kilometer. 
+#'    units of kilometers, density comes out as inidividuals per square kilometer.
 #'     
 #'  @return The spatial (SECR) log likelihood. Note, at very last, log likelihood is 
 #'  multiply by -1 so this routine actually returns the negative of the log likelihood.  
@@ -182,7 +183,8 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
 #   print(nsecondary)
 
   # Compute SECR likelihood for each occasion ========================
-  hab.pixel.area <- prod(hab.mask@grid@cellsize)
+  hab.pixel.area <- prod(data.frame(getGridTopology(hab.mask))$cellsize)
+  # hab.pixel.area <- prod(hab.mask@grid@cellsize)  # another way to compute same.  I don't know which is better.
     
   secrLL <- function(i,c.hist,b,ns,trps,aclocs,pix.area){
 

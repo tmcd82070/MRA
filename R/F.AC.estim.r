@@ -44,12 +44,10 @@
 #'    Exactly like masks in the SECR package, \code{hab.mask} defines the outer limit of integration, defines 
 #'    sites that are habitat and thus can be occupied, descritizes habitat covariates for use in models.
 #'    The current implementation does not allow the habitat mask to change between primaries or secondaries. 
-#'    The mask is constant throughout the study.  
-#'    Note that the area of each pixel (grid cell) is computed
-#'    as \code{prod(hab.mask@grid@cellsize)}, so \code{hab.mask} must be projected (e.g., in UTM's) 
-#'    and coordinates in \code{traps} must be in the same units.  Resulting density estimates 
-#'    are number of animals per squared unit of this system.  E.g., if using UTM coordinates in 
-#'    units of kilometers, density comes out as inidividuals per square kilometer. 
+#'    The mask is constant throughout the study.  Here, \code{hab.mask} is used to test whether 
+#'    an estimated activity center is in valid habitat, and if not, moved to a location in valid habitat. 
+#'    Because centers of the pixels or cells are used for this purpose, size (area) of the mask is not 
+#'    needed, but the mask still must be projected in the same units as \code{traps}. 
 #'
 #' @details  This function estimates activity center locations given trapped locations using maximum likelihood. 
 #' It finds the (X,y) location which maximized the probability of obsevering the capture history. 

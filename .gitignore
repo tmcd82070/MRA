@@ -13,3 +13,10 @@ src-x64
 *.mod
 *.o
 *.dll
+man/F.AC.estim.Rd
+man/F.move.2.habitat.Rd
+man/F.parm.estim.Rd
+man/F.spat.capProbs.Rd
+man/F.spat.loglik.X.Rd
+man/F.spat.robust.loglik.X.Rd
+man/F.spatial.pstar.Rd
