@@ -56,16 +56,18 @@ F.spat.loglik.X <- function( beta, ch, traps, aclocs, mask.pixel.area=1, type="m
   if( nrow(ch) != nrow(aclocs))  stop("Number of rows in ch must equal number of rows in aclocs.")
   
   # Compute probabilties given beta and trap configuration at all locations ============
-  capProbs <- F.spat.capProbs(beta, traps, aclocs, type, return.cellp=TRUE)
+  capProbs <- F.spat.capProbs(beta, traps, aclocs, type, return.occasionp=TRUE)
   p. <- capProbs$pdot
   p.s <- capProbs$p.s
   p_ks <- capProbs$p_ks
   
+  cat("in F.spat.loglik\n")
+  print(p.)
  
   # Compute Probability of capture histories ===========================================
   # Need p_ks and p.s and ch here.
   # tmp <- TRUE   # debugging only
-  
+  nan <- nrow(aclocs)
   p.omega <- rep(NA,nan)  # length = # animals = one p.omega for each animal's location
   for( i in 1:nan ){
     omega.i <- ch[i,]  # 0 histories checked above, so omega.i>0 for at least one element
@@ -148,8 +150,9 @@ F.spat.loglik.X <- function( beta, ch, traps, aclocs, mask.pixel.area=1, type="m
   # Compute a = integral of p.(X) over possible HR centers
   # total probability of capture (integeral of capture function
   # over all HR center locations)
-  
-  D <- exp(beta["D"])
+
+  D.loc <- grep("^D",names(beta))
+  D <- exp(beta[D.loc])
   
    a <- sum(p.)  # this assumes all pixels in the same size
 # 

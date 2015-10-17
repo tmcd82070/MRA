@@ -50,20 +50,36 @@ F.spat.capProbs <- function(beta, traps, aclocs, type="multi", return.occasionp=
   T <- nan <- nrow(aclocs)
   ns <- length(traps)
   
-  K.max <- max(unlist(lapply(traps,nrow)))  # maximum number of traps used during an occasion
+
+  f.nrow <-function(x){
+    if( inherits(x, "SpatialPoints") ){
+      return(nrow(coordinates(x)))
+    } else {
+      return(nrow(x))
+    }
+  }
+  K.max <- max(unlist(lapply(traps,f.nrow)))  # maximum number of traps used during an occasion
   
   # Pull parameters from beta. # COULD EASILY MAKE THIS SECONDARY DEPENDENT BY PUTTING THIS IN K LOOP BELOW.
   # Pull using names so beta could be in any order
-  g0 <- exp(beta["g0"])/(1+exp(beta["g0"]))
-  sigma <- exp(beta["sigma"])
+  # Must use grep here because by default beta comes in with names like "g01", "g02", etc.
+  g0.loc <- grep("^g0",names(beta))
+  sigma.loc <- grep("^sigma",names(beta))
   
+  g0 <- exp(beta[g0.loc])/(1+exp(beta[g0.loc]))
+  sigma <- exp(beta[sigma.loc])
+  
+  cat("in F.spat.capProbs\n")
+  print(beta)
+  print(c(g0,sigma))
   
   # Compute occasion specific g = trap distance functions. =========
   g <- array(NA, c(T,K.max,ns))
   
   for(k in 1:ns){    
-    K.k <- nrow(traps[[k]])  # number of traps used during kth occasion
+    K.k <- f.nrow(traps[[k]])  # number of traps used during kth occasion
     
+
     # Compute distance from AC locations to  every trap =====
     # Pull activity center locations and coordinates.  Can't do this outside k loop because of K.k
     ACx <- matrix(aclocs[,1], T, K.k)
@@ -73,10 +89,10 @@ F.spat.capProbs <- function(beta, traps, aclocs, type="multi", return.occasionp=
     Ty <- matrix(traps[[k]][,2], T, K.k, byrow=T)
     
     d <- sqrt( (ACx-Tx)^2 + (ACy-Ty)^2 )  # rows=AC location = individual; cols=Trap location
-    
+
     # Put distance function  3D array. Dimensions are AC.centers (T) X max traps used (K.max) X Session (ns)
     # keep in mind that if the number of traps used varies, there are NA columns in some pages.
-    # specifically those past K.jk.
+    # specifically those past K.k.
     g[1:T,1:K.k,k] <- g0*exp(-d^2/(2*(sigma^2)))
   }
 
@@ -128,6 +144,8 @@ F.spat.capProbs <- function(beta, traps, aclocs, type="multi", return.occasionp=
   if(return.occasionp){
     ans <- c(ans, list(p.s=p.s, p_ks=p_ks))
   }
+  
+  cat("leaving F.spat.capProb -------\n")
   
   ans
 }

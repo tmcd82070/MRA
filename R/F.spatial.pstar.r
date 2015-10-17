@@ -32,7 +32,12 @@ F.spatial.pstar <- function(g0, sigma, traps, aclocs){
     
     # Each loop, replicate the p. calculations in F.spat.loglik.X
 
-    pstar[,j] <- F.spat.capProbs(c(g0=g0[j], sigma=sigma[j]), traps[[j]], aclocs[,j,] )
+    
+    p.star <- F.spat.capProbs(c(g0[j], sigma[j]), traps[[j]], aclocs[,j,] )
+    print(p.star)
+    print(length(p.star))
+    cat("-------\n")
+    pstar[,j] <- p.star$pdot
   }
   
   pstar

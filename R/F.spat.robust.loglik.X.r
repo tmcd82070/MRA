@@ -4,16 +4,22 @@
 #'  spatial robust design likelihood for a set of coefficients. Use this 
 #'  during the  "M" step of the EM algorithm
 #'  
-#' @param beta A named vector of coefficient estimates.  
+#' @param beta A named vector of coefficient estimates on linear scale.  
 #' Names and number of elements should be as follows:  
 #' \itemize{
-#'  \item "surv?" (survival) = (nprimary-1) elements corresponding to intervals between primary occasions
+#'  \item "surv?" (survival) = (nprimary-1) elements corresponding to intervals between primary occasions. 
+#'  logit link is assumed.
 #'  \item "gp?" (gamma prime, emigration) = (nprimary-1) elements corresponding to intervals between primary occasions.
+#'  logit link is assumed.
 #'  \item (Optional) "gpp?" (gamma prime prime, immigration) = (nprimary - 2) elements corresponding to intervals between 
 #'    2nd primary and the last.  Recall there is no immigration parameter for the interval between primary 1 and 2. 
+#'  logit link is assumed.
 #'  \item "D?" (density) = nprimary elements. 
+#'  log link is assumed.
 #'  \item "g0?" (capture probability at traps) = nprimary elements
+#'  logit link is assumed.
 #'  \item "sigma?" (capture probability width) = nprimary elements.
+#'  log link is assumed.
 #' }
 #' 
 #' Current implementation allows constant or complete time variation (small t).  For constant model, 
@@ -59,7 +65,8 @@
 #'    Exactly like masks in the SECR package, \code{hab.mask} defines the outer limit of integration, defines 
 #'    sites that are habitat and thus can be occupied, descritizes habitat covariates for use in models.
 #'    The current implementation does not allow the habitat mask to change between primaries or secondaries. 
-#'    The mask is constant throughout the study.  
+#'    The mask is constant throughout the study.  Only reason we need \code{hab.mask} in this 
+#'    function is because we need size of each pixel to compute density parameter.  
 #'    Note that the area of each pixel (grid cell) is computed
 #'    as \code{prod(data.frame(getGridTopology(hab.mask))$cellsize)}, 
 #'    so \code{hab.mask} must be projected (e.g., in UTM's) 
@@ -109,9 +116,9 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
     # Current implementation allows only time variation (small t or dot model are subsets).
     # This returns linear predictors.  Link functions are applied later.
     
-    s.parms <- grep("^S",names(beta))
+    s.parms <- grep("^s",names(beta))
     gp.parms <- grep("^gp",names(beta))
-    gpp.parms <- grep("^gpp",names(beta))
+    gdp.parms <- grep("^gdp",names(beta))
     
     
     # For now, same SECR parameters in each primary session
@@ -142,17 +149,17 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
     } 
     # For rest of routine to work g must have length nprim.  gp[1]=NA
     
-    # gpp parameters
-    gpp <- beta[gpp.parms]
-    if(length(gpp) == (nprim-2)){
-      gpp <- c(NA,NA,gpp)  # use all gammas
-    } else if( length(gpp) == 0 ){
+    # gdp parameters.  gdp = gamma double prime.
+    gdp <- beta[gdp.parms]
+    if(length(gdp) == (nprim-2)){
+      gdp <- c(NA,NA,gdp)  # use all gammas
+    } else if( length(gdp) == 0 ){
       # Constrain gpp to equal gp
-      gpp <- gp
-      gpp[2] <- NA  # except gpp[2] is not possible to estimate
+      gdp <- gp
+      gdp[2] <- NA  # except gpp[2] is not possible to estimate
     } else {
       # Assume constant model
-      gpp <- c(NA,NA,rep(gpp[1],(nprim-2))) # first two gpp's not possible.
+      gdp <- c(NA,NA,rep(gdp[1],(nprim-2))) # first two gpp's not possible.
     } 
     # For rest of routine to work gpp must have length nprim.  gpp[1:2]=NA
     
@@ -177,13 +184,17 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
       D <- rep(D[1],nprim)
     } 
     
-    list(s.eta=s, gp.eta=gp, gpp.eta=gpp, D.eta=D, g0.eta=g0, sigma.eta=sigma)
+    list(s.eta=s, gp.eta=gp, gdp.eta=gdp, D.eta=D, g0.eta=g0, sigma.eta=sigma)
   }
   parms <- f.real.model(beta,nprimary)
   
     print(parms)
 #   print(nsecondary)
 
+  # Fixup the traps object =================
+  traps <- F.fixup.traps(traps, nprimary, nsecondary)
+    
+    
   # Compute SECR likelihood for each occasion ========================
   hab.pixel.area <- prod(data.frame(getGridTopology(hab.mask))$cellsize)
   # hab.pixel.area <- prod(hab.mask@grid@cellsize)  # another way to compute same.  I don't know which is better.
@@ -215,6 +226,8 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
     aclocs=ac.locs, 
     pix.area=hab.pixel.area
   )  
+  print(closedLL)
+  
   closedLL <- sum(closedLL)
 
    cat(paste("SECR part:", closedLL, "\n"))
@@ -223,16 +236,17 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
   
   # Compute Open part of robust design likelihood =========================
   # Take links
-  s <- 1/(1+exp(-parms$s.eta))
-  gamma <- 1/(1+exp(-parms$gamma.eta))
-  g0 <- 1/(1+exp(-parms$g0.eta))
-  sigma <- exp(parms$sigma.eta)   # Note log link here, rather than logit
+  s <-  parms$s.eta
+  gp <- parms$gp.eta
+  gdp<- parms$gdp.eta
+  g0 <- parms$g0.eta
+  sigma <- parms$sigma.eta   
   
   p.star <- F.spatial.pstar(g0, sigma, traps, ch)
   #print(p.star)
 
   # This returns the "real" log likelihood, not the negative
-  openLL <- F.robust.open.part(ch,p.star,s,gamma)
+  openLL <- F.robust.open.part(ch,p.star,s,gp, gdp)
   
   
   # Done ======================================================

@@ -2,21 +2,28 @@
 #' 
 #' @description Given estimates of beta, compute estimates of latent activity center locations.
 #' 
-#' @param beta A named list of coefficient estimates.  Length of \code{beta} must be either 5 or 6. If  \code{length(beta)}
+#' @param beta A named list of coefficient estimates on the linear scale.  
+#' Length of \code{beta} must be either 5 or 6. If  \code{length(beta)}
 #' equals 5, assume that the 'random emigration' model is being fitted wherein emigration probability (gp) and immigration 
 #' probability (gpp) are equal. If  \code{length(beta)} equals 6, assume 'Markov emigration' model is being fitted 
 #' wherein emigration (gp) and immigration (gpp) depend upon whether an individual is on or off the 
 #' study area (see robust design literature for more details). There are 2 or 3 elements for open part of likelihood
 #' (Suvival, immigration, emigration) and 3 for closed part of model (density, g0 in sightability, sigma in sightability).   
 #' Names and sizes of elements is as follows:  
-#' . "surv" (survival) = a vector of length (nprimary-1) corresponding to intervals between primary occasions
-#' . "gp" (gamma prime, emigration) = a vector of length (nprimary-1) corresponding to intervals between primary occasions.
-#' . (Optional) "gpp" (gamma prime prime, immigration) = a vector of length (nprimary - 2) corresponding to intervals between 
+#' \itemize{
+#'    \item "surv" (survival) = a vector of length (nprimary-1) corresponding to intervals between primary occasions.
+#' logit link is assumed.
+#'    \item "gp" (gamma prime, emigration) = a vector of length (nprimary-1) corresponding to intervals between primary occasions.
+#' logit link is assumed.
+#'    \item (Optional) "gpp" (gamma prime prime, immigration) = a vector of length (nprimary - 2) corresponding to intervals between 
 #'    2nd primary and the last.  Recall there is no immigration parameter for the interval between primary 1 and 2. 
-#' . "D" (density) = a vector of length nprimary. 
-#' . "g0" (capture probability at traps) = a vector of length nprimary
-#' . "sigma" (capture probability width) = vector or length nprimary
-#' Here, the only the sightability coefficients (i.e., g0 and sigma) are used.
+#'    logit link is assumed.
+#'    \item "D" (density) = a vector of length nprimary. log link is assumed.
+#'    \item "g0" (capture probability at traps) = a vector of length nprimary.  logit link is assumed.
+#'    \item "sigma" (capture probability width) = vector or length nprimary. log link is assumed.
+#' }
+#' Here, the only the sightability coefficients (i.e., g0 and sigma) are used.  Inverse link function 
+#' are applied to g0 and sigma before use.
 #' 
 #' Note this structure for beta facilitates pure time varying models on all parameters, and subsets (e.g., constant).  This 
 #' structure will not facilitate covariates or individual heterogeneity.  I don't know what you'll do if you need those. 
@@ -86,8 +93,9 @@ F.AC.estim <- function( beta, ch, traps, hab.mask){
 
   # Fix up beta vector --------------------------------
   # Extract coefficients from beta vector. Note, only time varying models here. No covariates or individual variation.
-  g0 <- beta$g0  # vector length nprimary
-  sigma <- beta$sigma  # vector length nprimary
+  b <- F.fixup.beta( beta, to.real=TRUE )
+  g0 <- b$g0  # vector length nprimary
+  sigma <- b$sigma  # vector length nprimary
   
     
   traps <- F.fixup.traps( traps, nprimary, nsecondary )

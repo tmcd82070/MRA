@@ -25,7 +25,7 @@ F.fixup.traps <- function( traps, nprimary, nsecondary ){
       # All traps on all the time
       trps <- vector("list",nprimary)
       for(j in 1:nprimary){
-        trps[[j]] <- rep(list(traps), nsecondary[j])
+        trps[[j]] <- rep(list(coordinates(traps)), nsecondary[j])
       }
       traps <- trps
     } else { 

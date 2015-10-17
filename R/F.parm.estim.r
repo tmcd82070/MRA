@@ -25,7 +25,7 @@
 #' or a SpatialPoints object containing T(i,j) trap locations that were "on" during the j-th secondary occasion of the i-th primary. The trap location that caught 
 #' animal m during the j-th secondary of the i-th primary is \code{traps[[i]][[j]][ch[m,i,j],]}.
 #  
-#' @param beta.init A named list of initial coefficient estimates.  Length of \code{beta.init} is either 5 or 6. If  \code{length(beta.init)}
+#' @param beta.init A named list of initial coefficient estimates on linear scale.  Length of \code{beta.init} is either 5 or 6. If  \code{length(beta.init)}
 #' equals 5, assume that the 'random emigration' model is being fitted wherein emigration probability (gp) and immigration 
 #' probability (gpp) are equal. If  \code{length(beta.init)} equals 6, assume 'Markov emigration' model is being fitted 
 #' wherein emigration (gp) and immigration (gpp) depend upon whether an individual is on or off the 
@@ -47,7 +47,7 @@
 #' 
 #' @details Combining this routine with \code{F.AC.estim} one can implement the EM algorithm for estimating a spatial robust design. 
 #' 
-F.parm.estim <- function(ac.locs, ch, traps, beta.init){
+F.parm.estim <- function(ac.locs, ch, traps, hab.mask, beta.init){
 
   if( !inherits(ch,"array") ) stop("ch must be an array")
   if( length(dim(ch)) != 3) stop(paste("ch must have 3 dimensions.", length(dim(ch)), "found."))
@@ -66,7 +66,8 @@ F.parm.estim <- function(ac.locs, ch, traps, beta.init){
   b.init <- unlist(beta.init)  # this concatinates names and element numbers. E.g., second element of "surv" vector gets named "surv2"
   
   # Do the maximization
-  fit <- optim( b.init, F.spat.robust.loglik.X, ch=ch, ac.locs=ac.locs, traps=traps, method="L-BFGS-B", lower=llimit, upper=hlimit, 
+  fit <- optim( b.init, F.spat.robust.loglik.X, ch=ch, ac.locs=ac.locs, traps=traps, hab.mask=hab.mask,
+                method="L-BFGS-B", lower=llimit, upper=hlimit, 
                 hessian = TRUE, control=list(factr=5e9, pgtol=1e-8, maxit=1000))
   
   
