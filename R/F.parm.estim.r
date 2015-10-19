@@ -65,6 +65,8 @@ F.parm.estim <- function(ac.locs, ch, traps, hab.mask, beta.init){
   # Fix up beta.  I.e., take it from a list to a vector so optim works
   b.init <- unlist(beta.init)  # this concatinates names and element numbers. E.g., second element of "surv" vector gets named "surv2"
   
+  print(b.init)
+  
   # Do the maximization
   fit <- optim( b.init, F.spat.robust.loglik.X, ch=ch, ac.locs=ac.locs, traps=traps, hab.mask=hab.mask,
                 method="L-BFGS-B", lower=llimit, upper=hlimit, 

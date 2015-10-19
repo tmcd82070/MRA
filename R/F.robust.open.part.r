@@ -1,11 +1,40 @@
-F.robust.open.part <- function(ch, p.star, s, g){
-  # Purpose: 
-  # Evaluate the "open" part of the robust design likelihood.
-  #
-  # ch = 3D capture indicator matrix
-  # p.star = either vector of length (nprimary) or matrix of size  dim(ch)[1] X dim(ch)[2] = 
-  #   (num animals) X (num primaries)  containing Pr(capture for individual i during primary occasion j)
-  
+#' @title Open part of robust design likelihood
+#' 
+#' @description Computes open portion of the robust design likelihood 
+#' 
+#' @param ch A 3-D array of capture histories.  Size is nan X nprim X nsecondaries.  Missing secondaries 
+#' are specified with columns of all NA's (i.e., if the 4th secondary of the ith primary was not done, 
+#' \code{all(is.na(ch[,i,4])) == TRUE}).  Cells in the array contain trap number that caught the individual.
+#' Trap numbers are rows in a matrix embedded in the \code{traps} object.  \code{ch[i,j,k]} = 0 if 
+#' animal i was uncaptured during 
+#' secondary occasion k of primary occasion j. \code{ch[i,j,k]} = x (where x integer > 0) means 
+#' animal i was captured 
+#' during secondary occasion k of primary occasion j in trap x which has coordinates
+#' \code{traps[[j]][[k]][x,]}.
+#' 
+#' @param p.star A nan X nprimaries matrix containing estimated probabilities of detection during each 
+#'    primary.  \code{p.star[i,j]} = probability of capturing individual i at least once during primary 
+#'    occasion j (over all secondaries contained in j).  
+#'    This is the "p star" of Kendall's papers, which is the "p dot" of Borchers and Efford.
+#'    
+#' @param s Survival probabilities.  A vector of length (nprimary-1) corresponding to intervals between primary occasions. 
+#'  logit link is assumed.
+#'  
+#' @param gp Immigration parameters (gamma primes). A vector of length (nprimary-2) elements 
+#'  corresponding to intervals between 2nd primary and the last. Recall there is no 
+#' immigration parameter for the interval between primary 1 and 2. Given an individual 
+#' is off the study area, probability of immigrating onto the study area during interval j 
+#' is 1-gp[j].  logit link is assumed. 
+#'  
+#' @param gdp Emigration probabilities (gamma prime prime). A vector of length  (nprimary - 1) 
+#' elements corresponding to intervals between primaries.  
+#'  logit link is assumed.
+#'  
+#'  @return A scalar.  The log likelihood for the open part of a robust design model.  Usually,
+#'  one will want to multiply this number by -1 to minimize. 
+#'  
+F.robust.open.part <- function(ch, p.star, s, gp, gdp){
+
   nan <- dim(ch)[1]
   nprimary <- dim(ch)[2]
   
@@ -39,7 +68,7 @@ F.robust.open.part <- function(ch, p.star, s, g){
   
   # IMMIGRATION PART =========================================================
   # Gamma = immigration part of likelihood
-  f.gamma.recurse<-function(h,g,p){
+  f.gamma.recurse<-function(h,gp,gdp,p){
     
     #     cat("h=")
     #     cat(h)
@@ -55,55 +84,56 @@ F.robust.open.part <- function(ch, p.star, s, g){
     
     if(h[1]==1 & h[2]==1){
       # These would be gamma prime primes if Markovian movement
-      ans <- (1-g[2])*(p[2])*f.gamma.recurse(h[-1],g[-1],p[-1])
+      ans <- (1-gdp[2])*(p[2])*f.gamma.recurse(h[-1],gp[-1],gdp[-1],p[-1])
       
     } else if(h[1]==1 & h[2]==0){
       # These would be gamma prime primes if Markovian movement
-      ans <- (1-g[2])*(1-p[2])*f.gamma.recurse(h[-1],g[-1],p[-1]) +
-        (g[2])*f.gamma.recurse(h[-1],g[-1],p[-1]) 
+      ans <- (1-gdp[2])*(1-p[2])*f.gamma.recurse(h[-1],gp[-1],gdp[-1],p[-1]) +
+        (gdp[2])*f.gamma.recurse(h[-1],gp[-1],gdp[-1],p[-1]) 
       
     } else if(h[1]==0 & h[2]==1){
       # These would be gamma primes if Markovian movement
-      ans <- (1-g[2])*(p[2])*f.gamma.recurse(h[-1],g[-1],p[-1]) 
+      ans <- (1-gp[2])*(p[2])*f.gamma.recurse(h[-1],gp[-1],gdp[-1],p[-1]) 
       
     } else if(h[1]==0 & h[2]==0){
       # These would be gamma primes if Markovian movement      
-      ans <- (1-g[2])*(1-p[2])*f.gamma.recurse(h[-1],g[-1],p[-1]) +
-        (g[2])*f.gamma.recurse(h[-1],g[-1],p[-1]) 
+      ans <- (1-gp[2])*(1-p[2])*f.gamma.recurse(h[-1],gp[-1],gdp[-1],p[-1]) +
+        (gp[2])*f.gamma.recurse(h[-1],gp[-1],gdp[-1],p[-1]) 
     }
     ans
   }
   
-  f.gamma.indiv <- function(i,ch,g,p,f,l){
+  f.gamma.indiv <- function(i,ch,gp,gdp,p,f,l){
     pos <- seq(along=ch[i,])
     ind <- f[i] <= pos & pos <= l[i]
     ch.i <- ch[i,ind]
-    g.i <- g[ind]   # note, g and p are one element shorter than chi.i
+    gdp.i <- gdp[ind]
+    gp.i <- gp[ind]   # note, gp and p are one element shorter than chi.i
     p.i <- p[i,ind]   # this is because condition on first capture.
     # computations in recursive part are based on the second of 
     # capture indicator pairs.
     #     cat("-----\n")
-    ans <- f.gamma.recurse(ch.i, g.i, p.i)
+    ans <- f.gamma.recurse(ch.i, gp.i, gdp.i, p.i)
   }
   
-  # Make sure p.star is a matrix.
-  if( length(p.star) == nprimary){
-    # p.star is vector, rep across individuals
-    #cat("p.star was not a matrix.  Is this okay?")
-    p.star <- matrix( p.star, nan, nprimary, byrow=T )
-#    print(p.star)
-  }
+#   # Make sure p.star is a matrix.
+#   if( length(p.star) == nprimary){
+#     # p.star is vector, rep across individuals
+#     #cat("p.star was not a matrix.  Is this okay?")
+#     p.star <- matrix( p.star, nan, nprimary, byrow=T )
+# #    print(p.star)
+#   }
+# 
+# #assign("tmp.pstar2",p.star, pos=.GlobalEnv)
 
-assign("tmp.pstar2",p.star, pos=.GlobalEnv)
-
-  g.part <- sapply(1:nan, f.gamma.indiv, ch=ch.reduced, g=g, p=p.star, f=f, l=l)
+  g.part <- sapply(1:nan, f.gamma.indiv, ch=ch.reduced, gp=gp, gdp=gdp, p=p.star, f=f, l=l)
 #     print(cbind(ch.reduced,g.part)[1:10,])
   
   g.part <- sum(log(g.part))
   cat(paste("g part:", g.part, "\n"))
   
   # CHI PART =========================================================
-  f.chi.recurse <- function(i,g,p,s,K){
+  f.chi.recurse <- function(i,gp,p,s,K){
     if( i==K ) return(1)
     
     #     cat(paste("i=",i,"\n"))
@@ -121,17 +151,17 @@ assign("tmp.pstar2",p.star, pos=.GlobalEnv)
     
     # From Kendal et al 1997:
     
-    ans <- 1 - s[i]*(1 - (1 - (1 - g[i+1])*p[i+1])*f.chi.recurse(i+1,g,p,s,K))
+    ans <- 1 - s[i]*(1 - (1 - (1 - gp[i+1])*p[i+1])*f.chi.recurse(i+1,gp,p,s,K))
     ans
   }
   
-  f.chi.indiv <- function(i,g,p,s,l,K){
-    ans <- f.chi.recurse(l[i], g, p[i,], s, K)
+  f.chi.indiv <- function(i,gp,p,s,l,K){
+    ans <- f.chi.recurse(l[i], gp, p[i,], s, K)
 #     cat(paste("i=",i,"l[i]=",l[i],"K=",K,"ans=",ans,"\n"))   
     ans
   }
   
-  chi.part <- sapply(1:nan, f.chi.indiv, g=g, p=p.star, l=l, s=s, K=nprimary)
+  chi.part <- sapply(1:nan, f.chi.indiv, gp=gp, p=p.star, l=l, s=s, K=nprimary)
 
 #   print(cbind(ch.reduced,chi.part)[1:10,])
 #   print(class(chi.part))

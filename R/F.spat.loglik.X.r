@@ -62,7 +62,7 @@ F.spat.loglik.X <- function( beta, ch, traps, aclocs, mask.pixel.area=1, type="m
   p_ks <- capProbs$p_ks
   
   cat("in F.spat.loglik\n")
-  print(p.)
+  print(capProbs)
  
   # Compute Probability of capture histories ===========================================
   # Need p_ks and p.s and ch here.

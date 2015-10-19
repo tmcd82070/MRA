@@ -44,9 +44,12 @@
 #' @param ch A 3-D array of capture histories.  Size is nan X nprim X nsecondaries.  Missing secondaries 
 #' are specified with columns of all NA's (i.e., if the 4th secondary of the ith primary was not done, 
 #' \code{all(is.na(ch[,i,4])) == TRUE}).  Cells in the array contain trap number that caught the individual.
-#' Trap numbers are rows in the \code{traps} matrix. ch[i,j,k] = 0 if animal i was uncaptured during 
-#'     secondary occasion k of primary occasion j. ch[i,j,k] = x (where x integer > 0) means animal i was captured 
-#'     during secondary occasion k of primary occasion j in trap x which has coordinates \code{traps[[j]][[k]][x,]}.
+#' Trap numbers are rows in a matrix embedded in the \code{traps} object.  \code{ch[i,j,k]} = 0 if 
+#' animal i was uncaptured during 
+#' secondary occasion k of primary occasion j. \code{ch[i,j,k]} = x (where x integer > 0) means 
+#' animal i was captured 
+#' during secondary occasion k of primary occasion j in trap x which has coordinates
+#' \code{traps[[j]][[k]][x,]}.
 #' 
 #' @param traps Either a \code{SpatialPoints} object, or a list of lists containing trap locations for each secondary. 
 #' If \code{traps} is a \code{SpatialPoints} object, it is assumed that all traps were "on" during all secondary occasions (recall secondary
@@ -115,6 +118,9 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
     #
     # Current implementation allows only time variation (small t or dot model are subsets).
     # This returns linear predictors.  Link functions are applied later.
+    
+    print("in F.spat.robust.loglik")
+    print(beta)
     
     s.parms <- grep("^s",names(beta))
     gp.parms <- grep("^gp",names(beta))
@@ -226,6 +232,7 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
     aclocs=ac.locs, 
     pix.area=hab.pixel.area
   )  
+  cat("in F.spat.robust.loglik -----")
   print(closedLL)
   
   closedLL <- sum(closedLL)
@@ -242,10 +249,14 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
   g0 <- parms$g0.eta
   sigma <- parms$sigma.eta   
   
-  p.star <- F.spatial.pstar(g0, sigma, traps, ch)
+  p.star <- F.spatial.pstar(g0, sigma, traps, ac.locs)
   #print(p.star)
 
   # This returns the "real" log likelihood, not the negative
+  cat("in F.spat.robust.loglik.x")
+  print(gp)
+  print(gdp)
+  
   openLL <- F.robust.open.part(ch,p.star,s,gp, gdp)
   
   

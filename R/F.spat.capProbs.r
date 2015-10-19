@@ -76,7 +76,11 @@ F.spat.capProbs <- function(beta, traps, aclocs, type="multi", return.occasionp=
   # Compute occasion specific g = trap distance functions. =========
   g <- array(NA, c(T,K.max,ns))
   
+  cat("locaitons:\n")
+  print(aclocs)
+  
   for(k in 1:ns){    
+    
     K.k <- f.nrow(traps[[k]])  # number of traps used during kth occasion
     
 

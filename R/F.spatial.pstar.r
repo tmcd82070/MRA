@@ -34,9 +34,11 @@ F.spatial.pstar <- function(g0, sigma, traps, aclocs){
 
     
     p.star <- F.spat.capProbs(c(g0[j], sigma[j]), traps[[j]], aclocs[,j,] )
+    
+    cat("in F.spatial.pstar-----")
     print(p.star)
-    print(length(p.star))
     cat("-------\n")
+
     pstar[,j] <- p.star$pdot
   }
   
