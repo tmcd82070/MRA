@@ -20,20 +20,15 @@
 #' @param s Survival probabilities.  A vector of length (nprimary-1) corresponding to intervals between primary occasions. 
 #'  logit link is assumed.
 #'  
-#' @param gp Immigration parameters (gamma primes). A vector of length (nprimary-2) elements 
-#'  corresponding to intervals between 2nd primary and the last. Recall there is no 
-#' immigration parameter for the interval between primary 1 and 2. Given an individual 
-#' is off the study area, probability of immigrating onto the study area during interval j 
-#' is 1-gp[j].  logit link is assumed. 
-#'  
-#' @param gdp Emigration probabilities (gamma prime prime). A vector of length  (nprimary - 1) 
-#' elements corresponding to intervals between primaries.  
+#' @param g Immigration and emigration parameters. A vector of length  (nprimary - 1) 
+#' elements corresponding to intervals between primaries.  Only the random emigration model 
+#' is implemented here.  In Kendall's (1997) notation, gamma prime = gamma prime prime. 
 #'  logit link is assumed.
 #'  
 #'  @return A scalar.  The log likelihood for the open part of a robust design model.  Usually,
 #'  one will want to multiply this number by -1 to minimize. 
-#'  
-F.robust.open.part <- function(ch, p.star, s, gp, gdp){
+#' 
+F.robust.open.part <- function(ch, p.star, s, g){
 
   nan <- dim(ch)[1]
   nprimary <- dim(ch)[2]
@@ -68,7 +63,7 @@ F.robust.open.part <- function(ch, p.star, s, gp, gdp){
   
   # IMMIGRATION PART =========================================================
   # Gamma = immigration part of likelihood
-  f.gamma.recurse<-function(h,gp,gdp,p){
+  f.gamma.recurse<-function(h,g,p){
     
     #     cat("h=")
     #     cat(h)
@@ -84,56 +79,55 @@ F.robust.open.part <- function(ch, p.star, s, gp, gdp){
     
     if(h[1]==1 & h[2]==1){
       # These would be gamma prime primes if Markovian movement
-      ans <- (1-gdp[2])*(p[2])*f.gamma.recurse(h[-1],gp[-1],gdp[-1],p[-1])
+      ans <- (1-g[2])*(p[2])*f.gamma.recurse(h[-1],g[-1],p[-1])
       
     } else if(h[1]==1 & h[2]==0){
       # These would be gamma prime primes if Markovian movement
-      ans <- (1-gdp[2])*(1-p[2])*f.gamma.recurse(h[-1],gp[-1],gdp[-1],p[-1]) +
-        (gdp[2])*f.gamma.recurse(h[-1],gp[-1],gdp[-1],p[-1]) 
+      ans <- (1-g[2])*(1-p[2])*f.gamma.recurse(h[-1],g[-1],p[-1]) +
+        (g[2])*f.gamma.recurse(h[-1],g[-1],p[-1]) 
       
     } else if(h[1]==0 & h[2]==1){
       # These would be gamma primes if Markovian movement
-      ans <- (1-gp[2])*(p[2])*f.gamma.recurse(h[-1],gp[-1],gdp[-1],p[-1]) 
+      ans <- (1-g[2])*(p[2])*f.gamma.recurse(h[-1],g[-1],p[-1]) 
       
     } else if(h[1]==0 & h[2]==0){
       # These would be gamma primes if Markovian movement      
-      ans <- (1-gp[2])*(1-p[2])*f.gamma.recurse(h[-1],gp[-1],gdp[-1],p[-1]) +
-        (gp[2])*f.gamma.recurse(h[-1],gp[-1],gdp[-1],p[-1]) 
+      ans <- (1-g[2])*(1-p[2])*f.gamma.recurse(h[-1],g[-1],p[-1]) +
+        (g[2])*f.gamma.recurse(h[-1],g[-1],p[-1]) 
     }
     ans
   }
   
-  f.gamma.indiv <- function(i,ch,gp,gdp,p,f,l){
+  f.gamma.indiv <- function(i,ch,g,p,f,l){
     pos <- seq(along=ch[i,])
     ind <- f[i] <= pos & pos <= l[i]
     ch.i <- ch[i,ind]
-    gdp.i <- gdp[ind]
-    gp.i <- gp[ind]   # note, gp and p are one element shorter than chi.i
+    g.i <- g[ind]   # note, g and p are one element shorter than chi.i
     p.i <- p[i,ind]   # this is because condition on first capture.
     # computations in recursive part are based on the second of 
     # capture indicator pairs.
     #     cat("-----\n")
-    ans <- f.gamma.recurse(ch.i, gp.i, gdp.i, p.i)
+    ans <- f.gamma.recurse(ch.i, g.i, p.i)
   }
   
-#   # Make sure p.star is a matrix.
-#   if( length(p.star) == nprimary){
-#     # p.star is vector, rep across individuals
-#     #cat("p.star was not a matrix.  Is this okay?")
-#     p.star <- matrix( p.star, nan, nprimary, byrow=T )
-# #    print(p.star)
-#   }
-# 
-# #assign("tmp.pstar2",p.star, pos=.GlobalEnv)
+  # Make sure p.star is a matrix.
+  if( length(p.star) == nprimary){
+    # p.star is vector, rep across individuals
+    #cat("p.star was not a matrix.  Is this okay?")
+    p.star <- matrix( p.star, nan, nprimary, byrow=T )
+#    print(p.star)
+  }
 
-  g.part <- sapply(1:nan, f.gamma.indiv, ch=ch.reduced, gp=gp, gdp=gdp, p=p.star, f=f, l=l)
+assign("tmp.pstar2",p.star, pos=.GlobalEnv)
+
+  g.part <- sapply(1:nan, f.gamma.indiv, ch=ch.reduced, g=g, p=p.star, f=f, l=l)
 #     print(cbind(ch.reduced,g.part)[1:10,])
   
   g.part <- sum(log(g.part))
   cat(paste("g part:", g.part, "\n"))
   
   # CHI PART =========================================================
-  f.chi.recurse <- function(i,gp,p,s,K){
+  f.chi.recurse <- function(i,g,p,s,K){
     if( i==K ) return(1)
     
     #     cat(paste("i=",i,"\n"))
@@ -151,17 +145,17 @@ F.robust.open.part <- function(ch, p.star, s, gp, gdp){
     
     # From Kendal et al 1997:
     
-    ans <- 1 - s[i]*(1 - (1 - (1 - gp[i+1])*p[i+1])*f.chi.recurse(i+1,gp,p,s,K))
+    ans <- 1 - s[i]*(1 - (1 - (1 - g[i+1])*p[i+1])*f.chi.recurse(i+1,g,p,s,K))
     ans
   }
   
-  f.chi.indiv <- function(i,gp,p,s,l,K){
-    ans <- f.chi.recurse(l[i], gp, p[i,], s, K)
+  f.chi.indiv <- function(i,g,p,s,l,K){
+    ans <- f.chi.recurse(l[i], g, p[i,], s, K)
 #     cat(paste("i=",i,"l[i]=",l[i],"K=",K,"ans=",ans,"\n"))   
     ans
   }
   
-  chi.part <- sapply(1:nan, f.chi.indiv, gp=gp, p=p.star, l=l, s=s, K=nprimary)
+  chi.part <- sapply(1:nan, f.chi.indiv, g=g, p=p.star, l=l, s=s, K=nprimary)
 
 #   print(cbind(ch.reduced,chi.part)[1:10,])
 #   print(class(chi.part))
