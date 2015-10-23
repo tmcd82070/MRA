@@ -49,6 +49,7 @@
 #' 
 F.parm.estim <- function(ac.locs, ch, traps, hab.mask, beta.init){
 
+  
   if( !inherits(ch,"array") ) stop("ch must be an array")
   if( length(dim(ch)) != 3) stop(paste("ch must have 3 dimensions.", length(dim(ch)), "found."))
   
@@ -65,11 +66,18 @@ F.parm.estim <- function(ac.locs, ch, traps, hab.mask, beta.init){
   # Fix up beta.  I.e., take it from a list to a vector so optim works
   b.init <- unlist(beta.init)  # this concatinates names and element numbers. E.g., second element of "surv" vector gets named "surv2"
   
-  print(b.init)
+  llimit <- hlimit <- b.init
+  llimit[1:length(llimit)] <- -Inf
+  llimit[ grep("^D", names(llimit)) ] <- 0
+  llimit[ grep("^sigma", names(llimit)) ] <- 0
+  hlimit[1:length(hlimit)] <- Inf
+
+  print(rbind(llimit,hlimit))
   
   # Do the maximization
   fit <- optim( b.init, F.spat.robust.loglik.X, ch=ch, ac.locs=ac.locs, traps=traps, hab.mask=hab.mask,
                 method="L-BFGS-B", lower=llimit, upper=hlimit, 
+                #method="BFGS",
                 hessian = TRUE, control=list(factr=5e9, pgtol=1e-8, maxit=1000))
   
   

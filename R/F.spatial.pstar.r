@@ -35,12 +35,17 @@ F.spatial.pstar <- function(g0, sigma, traps, aclocs){
     
     p.star <- F.spat.capProbs(c(g0[j], sigma[j]), traps[[j]], aclocs[,j,] )
     
-    cat("in F.spatial.pstar-----")
-    print(p.star)
-    cat("-------\n")
+#     cat("in F.spatial.pstar-----")
+#     print(p.star)
+#     cat("-------\n")
 
     pstar[,j] <- p.star$pdot
   }
+  
+  ## Cannot have all 0's in pstar after last capture, of Chi part of likelihood
+  ## is zero. 
+  ## this is not correct, but just for testing.
+  pstar[pstar <= 1e-6] <- .01
   
   pstar
 }

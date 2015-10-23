@@ -97,6 +97,9 @@
 # Objective function -----
 F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
 
+  cat(paste(rep("-",40),collapse=""))
+  cat("\n")
+
 
   if( !inherits(ch,"array") ) stop("ch must be an array")
   if( length(dim(ch)) != 3) stop(paste("ch must have 3 dimensions.", length(dim(ch)), "found."))
@@ -119,8 +122,8 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
     # Current implementation allows only time variation (small t or dot model are subsets).
     # This returns linear predictors.  Link functions are applied later.
     
-    print("in F.spat.robust.loglik")
-    print(beta)
+#     print("in F.spat.robust.loglik")
+#     print(beta)
     
     s.parms <- grep("^s",names(beta))
     gp.parms <- grep("^gp",names(beta))
@@ -194,7 +197,7 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
   }
   parms <- f.real.model(beta,nprimary)
   
-    print(parms)
+#    print(parms)
 #   print(nsecondary)
 
   # Fixup the traps object =================
@@ -232,12 +235,12 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
     aclocs=ac.locs, 
     pix.area=hab.pixel.area
   )  
-  cat("in F.spat.robust.loglik -----")
-  print(closedLL)
+#   cat("in F.spat.robust.loglik -----")
+#   print(closedLL)
   
   closedLL <- sum(closedLL)
 
-   cat(paste("SECR part:", closedLL, "\n"))
+#   cat(paste("SECR part:", closedLL, "\n"))
   
   
   
@@ -253,11 +256,11 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
   #print(p.star)
 
   # This returns the "real" log likelihood, not the negative
-  cat("in F.spat.robust.loglik.x")
-  print(gp)
-  print(gdp)
+#   cat("in F.spat.robust.loglik.x")
+#   print(gp)
+#   print(gdp)
   
-  openLL <- F.robust.open.part(ch,p.star,s,gp, gdp)
+  openLL <- F.robust.open.part(ch,p.star,s,gp)
   
   
   # Done ======================================================

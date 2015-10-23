@@ -69,15 +69,15 @@ F.spat.capProbs <- function(beta, traps, aclocs, type="multi", return.occasionp=
   g0 <- exp(beta[g0.loc])/(1+exp(beta[g0.loc]))
   sigma <- exp(beta[sigma.loc])
   
-  cat("in F.spat.capProbs\n")
-  print(beta)
-  print(c(g0,sigma))
+#   cat("in F.spat.capProbs\n")
+#   print(beta)
+#   print(c(g0,sigma))
   
   # Compute occasion specific g = trap distance functions. =========
   g <- array(NA, c(T,K.max,ns))
   
-  cat("locaitons:\n")
-  print(aclocs)
+#   cat("locaitons:\n")
+#   print(aclocs)
   
   for(k in 1:ns){    
     
@@ -149,7 +149,7 @@ F.spat.capProbs <- function(beta, traps, aclocs, type="multi", return.occasionp=
     ans <- c(ans, list(p.s=p.s, p_ks=p_ks))
   }
   
-  cat("leaving F.spat.capProb -------\n")
+#  cat("leaving F.spat.capProb -------\n")
   
   ans
 }

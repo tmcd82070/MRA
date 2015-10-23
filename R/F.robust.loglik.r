@@ -172,6 +172,8 @@ print(-ll)
 ##  fit2$convergence should equal 0
 ##  Standard errors are sqrt(diag(solve(fit2$hessian))), and match MARK's perfectly.
 ##  2*fit2$value equals MARK's -2loglik at solution.
+##  MARK results are in TestingVersion/ROBUST DESIGN HUGGINS.DBF, model 'S(t) gamma'(t)=gamma''(t) p(t)=c(t)'
+ 
 
 # ======== some checking =======
 
