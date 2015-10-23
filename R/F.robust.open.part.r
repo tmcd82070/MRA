@@ -111,7 +111,7 @@ F.robust.open.part <- function(ch, p.star, s, g){
     ans <- f.gamma.recurse(ch.i, g.i, p.i)
   }
   
-  print(p.star)
+  # print(p.star)
   
   # Make sure p.star is a matrix.
   if( length(p.star) == nprimary){
@@ -121,10 +121,10 @@ F.robust.open.part <- function(ch, p.star, s, g){
 #    print(p.star)
   }
 
-  cat("in F.robust.open.part:")
-  print(p.star)
+#   cat("in F.robust.open.part:")
+#   print(p.star)
   
-assign("tmp.pstar2",p.star, pos=.GlobalEnv)
+# assign("tmp.pstar2",p.star, pos=.GlobalEnv)
 
   g.part <- sapply(1:nan, f.gamma.indiv, ch=ch.reduced, g=g, p=p.star, f=f, l=l)
 #     print(cbind(ch.reduced,g.part)[1:10,])
@@ -158,7 +158,8 @@ assign("tmp.pstar2",p.star, pos=.GlobalEnv)
   
   f.chi.indiv <- function(i,g,p,s,l,K){
     ans <- f.chi.recurse(l[i], g, p[i,], s, K)
-     cat(paste("i=",i,"l[i]=",l[i],"K=",K,"ans=",ans,"\n"))   
+#      cat(paste("i=",i,"l[i]=",l[i],"ans=",ans,"\n"))   
+#      cat("p[i,]=",p[i,],"\n","s=",s,"\n")
     ans
   }
   

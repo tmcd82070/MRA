@@ -61,8 +61,8 @@ F.spat.loglik.X <- function( beta, ch, traps, aclocs, mask.pixel.area=1, type="m
   p.s <- capProbs$p.s
   p_ks <- capProbs$p_ks
   
-#   cat("in F.spat.loglik\n")
-#   print(capProbs)
+#    cat("in F.spat.loglik\n")
+#    print(p.)
  
   # Compute Probability of capture histories ===========================================
   # Need p_ks and p.s and ch here.
@@ -157,13 +157,16 @@ F.spat.loglik.X <- function( beta, ch, traps, aclocs, mask.pixel.area=1, type="m
    a <- sum(p.)  # this assumes all pixels in the same size
 # 
    Da <- D*a
-#   #print(Da)
+   # print(Da)
+   # cat("p.omega\n")
+   # print(p.omega)
+   
 #   # straight likelihood: L <- ((Da)^nan * exp(-Da) / factorial(nan)) * factorial(nan)/prod(factorial(n.freq)) * prod(colSums(p.omega*p.)) / a  # factorial(nan)'s cancel
 #   ##logL <- nan*log(Da) - Da  - sum(lfactorial(n.freq)) + sum(log(colSums(p.omega*p.))) - log(a)                                                                                              
 #   logL <- nan*log(Da) - Da  + sum(log(p.omega)) - nan*log(a)                                                                                              
   logL <- nan*log(D*mask.pixel.area) - (D*mask.pixel.area*a/nan)  + sum(log(p.omega))                                                                                               
   
-#   print(c(beta,-logL ))
+   # print(c(beta,-logL ))
 
   # Return negative log likelihood
   -logL

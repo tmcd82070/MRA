@@ -122,13 +122,6 @@ F.AC.estim <- function( beta, ch, traps, hab.mask){
       if( !all(h==0) ){
         x.init <- f.get.trap.locs(trapsj, h)  # returns matrix of X,Y coordinates where captured
         x.init <- colMeans( x.init )
-      } else {
-        # Unknown what is best to do here.  Need a point way off grid.  Start at 
-        # and extreme trap. Could pick random distance and direction from centroid.  
-        # Do not start at centroid! optim bombs in some cases when you start at the centroid.
-        x.init <- lapply( trapsj, function(x){apply(coordinates(x),2,max,na.rm=TRUE)} )
-        x.init <- rowMeans(matrix(unlist(x.init),2))
-      }
 
       # Debugging
 #       cat("x.init=")
@@ -139,24 +132,18 @@ F.AC.estim <- function( beta, ch, traps, hab.mask){
 #       cat("b=")
 #       cat(c(g0,sigma))
 #       cat("\n")
-      
-      
-      
-      # Maximize the likelihood of h over all X,Y locations 
-      ac.fit <-  optim( x.init, F.X.loglik, h=h, traps=trapsj, g0=g0[j], sigma=sigma[j])
-      
-      # print(ac.fit)
-      
-      if( ac.fit$convergence == 0){
-        if( !all(h==0) ){
-          # Animal was seen.  ac.fit may not be in habitat. Check and move it to habitat point with highest loglik. 
-          ac.locs[i,j,] <- F.move.2.habitat(ac.fit$par, hab.mask, h, trapsj, g0[j], sigma[j])
+
+        # Maximize the likelihood of h over all X,Y locations 
+        ac.fit <-  optim( x.init, F.X.loglik, h=h, traps=trapsj, g0=g0[j], sigma=sigma[j])
+        
+        # print(ac.fit)
+        
+        if( ac.fit$convergence == 0){
+            # Animal was seen.  ac.fit may not be in habitat. Check and move it to habitat point with highest loglik. 
+            ac.locs[i,j,] <- F.move.2.habitat(ac.fit$par, hab.mask, h, trapsj, g0[j], sigma[j])
         } else {
-          # un seen animals AC is not required to be in habitat
-          ac.locs[i,j,] <- ac.fit$par
+          stop("No AC location for animal ",i,"during primary occasion",j,"\nConvergence code=",ac.fit$convergence)
         }
-      } else {
-        stop("No AC location for animal ",i,"during primary occasion",j,"\nConvergence code=",ac.fit$convergence)
       }
 
 #       tmp <- readline()

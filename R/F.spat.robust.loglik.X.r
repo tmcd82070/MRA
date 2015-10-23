@@ -68,14 +68,15 @@
 #'    Exactly like masks in the SECR package, \code{hab.mask} defines the outer limit of integration, defines 
 #'    sites that are habitat and thus can be occupied, descritizes habitat covariates for use in models.
 #'    The current implementation does not allow the habitat mask to change between primaries or secondaries. 
-#'    The mask is constant throughout the study.  Only reason we need \code{hab.mask} in this 
-#'    function is because we need size of each pixel to compute density parameter.  
+#'    The mask is constant throughout the study.  We need \code{hab.mask} in this 
+#'    function for two reasons.  We need size of each pixel to compute density parameter.  
 #'    Note that the area of each pixel (grid cell) is computed
 #'    as \code{prod(data.frame(getGridTopology(hab.mask))$cellsize)}, 
 #'    so \code{hab.mask} must be projected (e.g., in UTM's) 
 #'    and coordinates in \code{traps} must be in the same units.  Resulting density estimates 
 #'    are number of animals per squared unit of this system.  E.g., if using UTM coordinates in 
-#'    units of kilometers, density comes out as inidividuals per square kilometer.
+#'    units of kilometers, density comes out as inidividuals per square kilometer.  We also need 
+#'    \code{hab.mask} to compute p.star when an animal is not seen during aprimary.
 #'     
 #'  @return The spatial (SECR) log likelihood. Note, at very last, log likelihood is 
 #'  multiply by -1 so this routine actually returns the negative of the log likelihood.  
@@ -97,6 +98,7 @@
 # Objective function -----
 F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
 
+  cat("in F.spat.robust.loglik.r ")
   cat(paste(rep("-",40),collapse=""))
   cat("\n")
 
@@ -236,23 +238,22 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
     pix.area=hab.pixel.area
   )  
 #   cat("in F.spat.robust.loglik -----")
-#   print(closedLL)
+   print(closedLL)
   
   closedLL <- sum(closedLL)
 
-#   cat(paste("SECR part:", closedLL, "\n"))
+   cat(paste("SECR part:", closedLL, "\n"))
   
   
   
   # Compute Open part of robust design likelihood =========================
-  # Take links
-  s <-  parms$s.eta
-  gp <- parms$gp.eta
-  gdp<- parms$gdp.eta
+  ilink <- function(x){1/(1+exp(-x))}
+  
   g0 <- parms$g0.eta
   sigma <- parms$sigma.eta   
-  
-  p.star <- F.spatial.pstar(g0, sigma, traps, ac.locs)
+
+  # F.spatial.pstar takes liner params, applies link inside.  Don't ask me why.
+  p.star <- F.spatial.pstar(g0, sigma, traps, ac.locs, hab.mask)
   #print(p.star)
 
   # This returns the "real" log likelihood, not the negative
@@ -260,6 +261,12 @@ F.spat.robust.loglik.X <- function( beta, ch, ac.locs, traps, hab.mask ){
 #   print(gp)
 #   print(gdp)
   
+  # Take links
+  s <-  ilink(parms$s.eta)
+  gp <- ilink(parms$gp.eta)
+  gdp<- ilink(parms$gdp.eta)
+  
+  # F.robust.open.part takes probabilities (not linear parameters).  Don't ask me why.
   openLL <- F.robust.open.part(ch,p.star,s,gp)
   
   
