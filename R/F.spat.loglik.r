@@ -20,9 +20,11 @@
 #'    parameter.  density is per 1 unit of this parameter.
 #'  @param type Type of trap, as defined by SECR. Note, currently only works for type='multi' the default.
 #'
+#'  @param only.loglik If TRUE only the negative of the log likelihood is returned. The default is FALSE, where a list is returned with the log likelihood and the average of the pdots.
+#'
 #'  @return The spatial (SECR) log likelihood. Note, at very last, log likelihood is
 #'  multiply by -1 so this routine actually returns the negative of the log likelihood. Note, constants, such as the multinomial coefficient, are not included in the likelihood.
-#'  This is done so that optim() can minimize and hessian estimation is correct.
+#'  This is done so that optim() can minimize and hessian estimation is correct. See only.loglik, a list is returned with the log likelihood and the average of the pdots. When only.loglik is FALSE the log likelihood is NOT multipled by negative one.
 #'
 #'  @details   This routine using the notation of Borchera and Efford (2008) "Spatially
 #'  Explicit Maximum Likelihood Methods for Capture–Recapture Studies", Biometrics, v64, 377-385.
@@ -36,7 +38,7 @@
 
 ## F.spat.loglik -----
 
-F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi"){
+F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi",only.loglik=FALSE){
   #
   # Compute closed population SECR likelihood for spatial capture models
   #
@@ -257,7 +259,13 @@ F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi"){
 
   ##print(c(beta,area,-logL))
 
-  return(-logL)
+  if(only.loglik){
+      return(-logL)
+  }
+  if(!only.loglik){
+      p.mean <- mean(p.)
+      return(list(logL=logL,p.mean=p.mean))
+  }
 
 }
 
