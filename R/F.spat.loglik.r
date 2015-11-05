@@ -102,6 +102,7 @@ F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi",o
   # Eventually, make this a call to a function that is passed in. i.e., add d.fund= parameter to this function call
   g <- g0*exp(-d^2/(2*(sigma^2)))
 
+
 #   # This is how you plot the distance function for one trap
 #     trp <- 1
 #     par(pty="s")
@@ -130,8 +131,8 @@ F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi",o
 #     }
 
     p_ks <- array( apply(p.s/h., 2, rep, times=K), c(T,K,ns)) # See note in paper.  I think T_s should be here.
-                                                              # I think should be p.s/h. rather than (1-exp(-h.))/h.
-                                                              # Plus, make matrix same size as individual hazard mat, so can multiply next
+    ## I think should be p.s/h. rather than (1-exp(-h.))/h.
+    ## Plus, make matrix same size as individual hazard mat, so can multiply next
     p_ks <- p_ks*h.k  # this is p.s multiplied by proportion of trap hazard, this is T X K X ns
 
 #     image(Xxx,Xyy, matrix(p_ks[,1,2],length(Xxx)), col=topo.colors(20))
@@ -161,7 +162,7 @@ F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi",o
 
   # Compute Probability of capture histories =================================
   # Need p_ks and p.s here.
-  tmp <- TRUE   # debugging only
+ # tmp <- TRUE   # debugging only
 
   p.omega <- matrix(NA, T, nan)  # rows = HR centers, cols = animals
   for( i in 1:nan ){
@@ -254,7 +255,7 @@ F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi",o
   #print(Da)
   # straight likelihood: L <- ((Da)^nan * exp(-Da) / factorial(nan)) * factorial(nan)/prod(factorial(n.freq)) * prod(colSums(p.omega*p.)) / a  # factorial(nan)'s cancel
   ##logL <- nan*log(Da) - Da  - sum(lfactorial(n.freq)) + sum(log(colSums(p.omega*p.))) - log(a)
-  logL <- nan*log(Da) - Da  - lfactorial(nan) + sum(log(colSums(p.omega))) - nan*log(a)
+  logL <- nan*log(Da) - Da  - lfactorial(nan) + sum(log(colSums(p.omega,na.rm=TRUE))) - nan*log(a)
 
 
   ##print(c(beta,area,-logL))
