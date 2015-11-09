@@ -264,7 +264,7 @@ F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi",o
       return(-logL)
   }
   if(!only.loglik){
-      return(list(logL=logL,p.=p.,h.=h.))
+      return(list(logL=logL,p.=p.))
   }
 
 }
