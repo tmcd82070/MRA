@@ -264,8 +264,7 @@ F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi",o
       return(-logL)
   }
   if(!only.loglik){
-      p.mean <- mean(p.)
-      return(list(logL=logL,p.mean=p.mean))
+      return(list(logL=logL,p.=p.,h.=h.))
   }
 
 }
