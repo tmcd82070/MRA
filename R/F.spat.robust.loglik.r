@@ -4,7 +4,7 @@
 F.spat.robust.loglik <- function( beta, ch, traps,hab.mask,pixel.area,subsetp.=1.96){
 
     require(plyr)
-
+## this is a test of gitHub
 
   #
   # inputs:
