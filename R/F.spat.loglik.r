@@ -2,14 +2,15 @@
 #'
 #'  @description Given a set of activity center locations (mask), this routine computes the homogenous possion process liklihood. No covariates can be used at this time.
 #'
-#'  @param beta Coefficients to use when computing log likelihood.  This should be of length 3.  First element is
-#'     log transform of density, second element is logit transform of g0, and third element is log transform of sigma.
+#'  @param beta Coefficients to use when computing log likelihood.  The vector needs to be names, with names D*, g0, sigma. There can only be one g0 and one sigma. All of the coefficients with name starting with D are multipled by densityMatrix.
+#'
+#' @param densityMatrix The model (design) matrix that the density part of the beta vector is multiple by.
 #'
 #'  @param ch  Data.frame of capture histories, size number of unique animals (nan) by number of secondaries (ns). The columns of ch should correpsond to each secondary occation, assumed to be in order. The rows of ch should correspond to a single animals capture history.  ch[i,j] = 0 if animal i was uncaptured during  occasion j. ch[i,j] = x (where x integer > 0) means animal i was captured at occasion j in trap x which has coordinates traps[x,].
 #'
-#'
-#'
-#'  @param traps  Data.frame of trap coordinates, size is K X 2. names(traps) should be 'x' and 'y'.
+#'  @param distance matrix of distances between the mask points and the trap locations. dim(distance) = c(number of mask points, number of traps).
+#'  @param mask Data.frame of mask coordinates, size is T X 2. names(mask) should be 'x' and 'y'. Currently ignored.
+#'  @param traps  Data.frame of trap coordinates, size is K X 2. names(traps) should be 'x' and 'y'. Currently ignored.
 #'
 #'
 #'
@@ -38,7 +39,7 @@
 
 ## F.spat.loglik -----
 
-F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi",only.loglik=FALSE){
+F.spat.loglik <- function( beta,densityMatrix, ch,distance, traps=NULL, mask=NULL,mask.pixel.area, type="multi",only.loglik=FALSE){
   #
   # Compute closed population SECR likelihood for spatial capture models
   #
@@ -68,6 +69,9 @@ F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi",o
   # Either I don't fully comprehend, or this paper has some ommisions and is therefore less helpful.
   # This paper is for the homogenous Poisson case only.
 
+    ## may to remove 0 cpature histories here
+    ch <- ch[rowSums(ch>0)>0,]
+
 
   # Disallow 0 capture histories
   if( any(rowSums(ch>0) == 0) ) stop("Cannot have 0 capture histories.")
@@ -75,28 +79,42 @@ F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi",o
   # Basic sizes
   ns <- ncol(ch) # number of secondaries
   nan <- nrow(ch) # number of animals
-  K <- nrow(traps)  # number of traps
+##  K <- nrow(traps)  # number of traps
+
+
+  K <- ncol(distance) # number of traps
+  T <- nrow(distance) # number of mask points
+
+  d <- distance
 
   ## Pull parameters from beta
-  D <- exp(beta[1])
-  g0 <- exp(beta[2])/(1+exp(beta[2]))
-  sigma <- exp(beta[3])
+  ##D <- exp(beta[1])
+
+  D.beta <- beta[grep('^D',names(beta))]
+  D <- exp(densityMatrix%*%D.beta)
+
+  g0.beta <- beta[grep('^g0',names(beta))]
+  g0 <- exp(g0.beta)/(1+exp(g0.beta))
+
+  sig.beta <- beta[grep('^sig',names(beta))]
+  sigma <- exp(sig.beta)
 
 
 
-  ## mask should be data.frame with column names x and y
-  ## these are the locations of the points in the habitat mask
-  X <- mask
 
-  T <- nrow(X)   # number of HR center locations
+  ## ## mask should be data.frame with column names x and y
+  ## ## these are the locations of the points in the habitat mask
+  ## X <- mask
 
-  # Compute distance from every potential home range center to every trap =====
-  Xx <- matrix(X$x, T, K)
-  Xy <- matrix(X$y, T, K)
-  Kx <- matrix(traps$x, T, K, byrow=T)
-  Ky <- matrix(traps$y, T, K, byrow=T)
+  ## T <- nrow(X)   # number of HR center locations
 
-  d <- sqrt( (Xx-Kx)^2 + (Xy-Ky)^2 )  # rows=HRlocation; cols=Trap location
+  ## # Compute distance from every potential home range center to every trap =====
+  ## Xx <- matrix(X$x, T, K)
+  ## Xy <- matrix(X$y, T, K)
+  ## Kx <- matrix(traps$x, T, K, byrow=T)
+  ## Ky <- matrix(traps$y, T, K, byrow=T)
+
+  ## d <- sqrt( (Xx-Kx)^2 + (Xy-Ky)^2 )  # rows=HRlocation; cols=Trap location
 
   # Apply distance function ===================================================
   # Eventually, make this a call to a function that is passed in. i.e., add d.fund= parameter to this function call
@@ -109,7 +127,7 @@ F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi",o
 #     image(Xxx,Xyy, matrix(g[,trp],length(Xxx)), main=paste("g for trap", trp))
 #     points(traps[,1],traps[,2])
 
-  # Make p_ks into a 3D array to account for occasions. dimensions are HR.centers (T) X Traps (K) X Session (ns)
+  # Make p_ks into a 3D array to account for occasions. dimensions are HR.centers (T) X Traps (K) X Secondary (ns)
   g <- array( g, c(T,K,ns) )
 
   # Compute trap hazard functions =============================================
@@ -200,8 +218,8 @@ F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi",o
 #     }
 
 
-#    p.omega[,i] <- p_ks.delta*pUncap/p.   # this is T X 1; p.omega is T X nan
-      p.omega[,i] <- p_ks.delta*pUncap   # this is T X 1; p.omega is T X nan
+    p.omega[,i] <- p_ks.delta*pUncap/p.   # this is T X 1; p.omega is T X nan
+#      p.omega[,i] <- p_ks.delta*pUncap   # this is T X 1; p.omega is T X nan
   }
 
 #  debugging
@@ -221,8 +239,8 @@ F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi",o
   ##   md=2))
 
 #   # The following computes capture frequencies without regard to traps, just captures
-#   n.freq <- matrix(as.numeric(ch>0),nan)
-#   n.freq <- table(apply(n.freq,1,paste,collapse=""))
+   n.freq <- matrix(as.numeric(ch>0),nan)
+   n.freq <- table(apply(n.freq,1,paste,collapse=""))
 
 #   cat("Capture frequencies: ========================\n")
 #   print(n.freq)
@@ -230,12 +248,19 @@ F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi",o
   # In-Homogeneous point process case ========================================
   # More general than homogeneous. In future, allow D to vary by X. That is, D is T X 1 vector.
   # That is, D would be a function of a SpatialPointsDataFrame
-#    Dp. <- D * p.
-#    lambda <- sum(Dp.)  # same as a when D constant
-#    f <- Dp. / lambda   # This is T X 1
-#   ##L <- (factorial(nan) / prod(factorial(n.freq))) * prod(colSums(p.omega*f))   # Straight likelihood
-#   logL <- lfactorial(nan) - sum(lfactorial(n.freq)) + sum(log(colSums(p.omega*f)))  # log Likelihood
+   Dp. <- D * p.*mask.pixel.area
+    lambda <- sum(Dp.)  # same as a when D constant
+    f <- Dp. / lambda   # This is T X 1
 
+    F <- array(f,dim=c(T,nan)) # needs to be expand for each animal for conformability
+
+    ## Borchers 2008 paper eq 1
+    ##    >| -- log(P(n|\phi,\theta)) ----------------|< >| -- log(P(\omega_1,...,\omega_n|n,\theta,\phi)) ---------------------------------|<
+    ##logL <- -lambda + nan*log(lambda) - lfactorial(nan) + lfactorial(nan) - sum(lfactorial(n.freq)) + sum(log(colSums(p.omega*F,na.rm=TRUE)))  # log Likelihood
+
+    logL <- -lambda + nan*log(lambda) - sum(lfactorial(n.freq)) + sum(log(colSums(p.omega*F,na.rm=TRUE)))  # log Likelihood
+
+##L <- (factorial(nan) / prod(factorial(n.freq))) * prod(colSums(p.omega*f))   # Straight likelihood
 
 # image(Xxx,Xyy, matrix(f,length(Xxx)), main="f")
 # points(traps[,1],traps[,2], pch=16)
@@ -250,17 +275,18 @@ F.spat.loglik <- function( beta, ch, traps, mask,mask.pixel.area, type="multi",o
 
   ## area give units to a
   ## currently assumes that area is the same for each point in the mask
-  a <- sum(p.)*mask.pixel.area
-  Da <- D*a
+  #a <- sum(p.)*mask.pixel.area
+  #Da <- D*a
   #print(Da)
   # straight likelihood: L <- ((Da)^nan * exp(-Da) / factorial(nan)) * factorial(nan)/prod(factorial(n.freq)) * prod(colSums(p.omega*p.)) / a  # factorial(nan)'s cancel
   ##logL <- nan*log(Da) - Da  - sum(lfactorial(n.freq)) + sum(log(colSums(p.omega*p.))) - log(a)
-  logL <- nan*log(Da) - Da  - lfactorial(nan) + sum(log(colSums(p.omega,na.rm=TRUE))) - nan*log(a)
+  #logL <- nan*log(Da) - Da  - lfactorial(nan) + sum(log(colSums(p.omega,na.rm=TRUE))) - nan*log(a)
 
 
   ##print(c(beta,area,-logL))
 
   if(only.loglik){
+
       return(-logL)
   }
   if(!only.loglik){
