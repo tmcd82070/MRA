@@ -1,63 +1,65 @@
 # F.spat.loglik -----
 
-F.spat.loglik2 <- function( beta, ch, traps, mask, type="multi" ){
-  # 
+F.spat.loglik2 <- function( beta, ch, traps, mask, type="multi",D.mod=D~1 ){
+  #
   # Compute closed SECR  likelihood with spatial locations using SECR routine
   #
-  # Input: 
-  #   beta = coefficients to minimize over.  
-  #   ch = matrix of capture histories.  ch[i,j] = 0 if animal i was uncaptured during 
-  #     occasion j. ch[i,j] = x (where x integer > 0) means animal i was captured 
-  #     at occasion j in trap x which has coordinates X[x,].  Eventually, this should be 
-  #     a SpatialPointDataFrame where points are coordinates of traps where each 
+  # Input:
+  #   beta = coefficients to minimize over.
+  #   ch = matrix of capture histories.  ch[i,j] = 0 if animal i was uncaptured during
+  #     occasion j. ch[i,j] = x (where x integer > 0) means animal i was captured
+  #     at occasion j in trap x which has coordinates X[x,].  Eventually, this should be
+  #     a SpatialPointDataFrame where points are coordinates of traps where each
   #     animal was caught and data frame contains animalID and occasion of capture. From
   #     that info, we could construct this ch matrix.
-  #   traps = matrix of trap coordinates.  size is K X 2.  Eventually, this could be 
+  #   traps = matrix of trap coordinates.  size is K X 2.  Eventually, this could be
   #     a SpatialPoints object.
-  #   buffer = distance to buffer bounding box of trap locations to define polygon of 
-  #     possible home range centers. 
+  #   buffer = distance to buffer bounding box of trap locations to define polygon of
+  #     possible home range centers.
   #
   # Value:
-  # The spatial Huggins log likelihood, 
-  
+  # The spatial Huggins log likelihood,
+
   require(secr)
-  
+
   # Disallow 0 capture histories
-  if( any(rowSums(ch>0) == 0) ) stop(paste("Cannot have capture histories of all zeros. check individual", 
+  if( any(rowSums(ch>0) == 0) ) stop(paste("Cannot have capture histories of all zeros. check individual",
                                            which(rowSums(ch>0)==0)[1]))
 
   traps <- as.data.frame(traps)
   rownames(traps)<-1:nrow(traps)
-  
-  attr(traps,"detector") <- type  
+
+  attr(traps,"detector") <- type
   class(traps) <- c("traps","data.frame")
   class(ch) <- "capthist"
-  
+
   traps(ch) <- traps
-  
+
 #   print(ch)
 #   print(beta)
 #   print(buffer)
 
-  logL <- secr.fit(ch, model = list(D~1,g0~1,sigma~1), start=beta, buffer = buffer, details=list(LLonly=T))
+  logL <- secr.fit(ch, model = list(D.mod,g0~1,sigma~1), start=beta,mask=mask , details=list(LLonly=T))
 
-    print(c(beta,logL))
-  
+    #print(c(beta,logL))
+  #saveLogL <- rbind(get('secrBeta',pos=.GlobalEnv),beta)
+  #assign('secrBeta',saveLogL,pos=.GlobalEnv)
+
   -logL
-  
+
 }
 
 
 
 # ============================================================================
-# Function calls 
+# Function calls
 
 #library(secr)
 #setwd(system.file('extdata', package='secr'))
 #myCH <- read.capthist('capt.txt','trap.txt', fmt = 'XY')
 #setwd("~/Programs/MRA/TestingVersion")
 
-#secr0 <- secr.fit(myCH, model = g0~1, buffer = 100, trace = FALSE) 
+#secr0 <- secr.fit(myCH, model = g0~1, buffer = 100, trace = FALSE)
 
 
 # Compute my LL for one observation ----------
@@ -74,7 +76,7 @@ F.spat.loglik2 <- function( beta, ch, traps, mask, type="multi" ){
 #fit1 <- nlminb(secr0$fit$par+ rnorm(3,0,.1), F.spat.loglik, ch=myCH, traps=attr(myCH,"traps"), buffer=100)
 #fit2 <- optim(secr0$fit$par+ rnorm(3,0,.1), F.spat.loglik2, ch=myCH, traps=attr(myCH,"traps"), buffer=100)
 #print(fit2)
-# 
-# tmp2 <- secr.fit(myCH, model = g0~1, start=fit1$par, buffer = 100, details=list(LLonly=T))  
+#
+# tmp2 <- secr.fit(myCH, model = g0~1, start=fit1$par, buffer = 100, details=list(LLonly=T))
 # cat("SECR LL at my params:\n")
 # print(tmp2)
