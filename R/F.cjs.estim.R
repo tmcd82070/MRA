@@ -87,7 +87,7 @@ if( missing( group )){
 vif <- c.hat
 
 #   Do the estimation, but first allocate room for answers
-loglik <- deviance <- aic <- qaic <- chisq.vif <- df.vif <- 0
+loglik <- chisq.vif <- df.vif <- 0
 parameters <- se.param <- rep(0, nx + ny )
 covariance <- matrix( 0, nx+ny, nx+ny )
 p.hat <- se.p.hat <- s.hat <- se.s.hat <- matrix( 0, nan, ns )

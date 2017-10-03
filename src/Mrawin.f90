@@ -28,7 +28,8 @@ module constants
     logical, parameter :: central_diffs = .true.  ! whether to take central differences to approximate derivative/gradient.
                               !.False. = one-sided difference which are less accurate, but less costly
                               ! because we don't have to compute log like twice
-
+                              
+    double precision, PARAMETER :: PI_D=3.141592653589793238462643383279502884197
 
     double precision, parameter :: missing = -999999.0D0  ! value to signify missing value to S or R. Used, e.g., for residuals.
 
@@ -156,9 +157,6 @@ subroutine cjsmod( nan, &
 !
 !    output:
 !    loglik = log likelihood value at the final parameters
-!    deviance = deviance
-!    aic = aic
-!    qaic = qaic
 !    c.hat = variance inflation factor
 !    chisq_vif = chisquare statistic used to compute the vif
 !    input_link = integer value specifying the link function, from the user, "input" to this routine
@@ -192,7 +190,7 @@ subroutine cjsmod( nan, &
     double precision, intent(inout), dimension(ns), target :: intervals  ! only 1:(ns-1) elements are used
 
 !    Output parameters
-    double precision, intent(inout) :: loglik, deviance, aic, qaic, c_hat, &
+    double precision, intent(inout) :: loglik, c_hat, &
                                      chisq_vif, df_vif
     double precision, intent(inout), dimension(nx+ny) :: parameters, se_param
     double precision, intent(inout), dimension(nx+ny, nx+ny) :: covariance
@@ -205,10 +203,7 @@ subroutine cjsmod( nan, &
     integer :: i,j, ioerr
     integer, target :: np
     integer, dimension(nan, ns), target :: idead
-    character(len=10) :: label
     integer, dimension(nan), target :: first, last
-    character(len=10) :: date
-    character(len=12) :: time
 
 !    ---- Set some program constants at run time
     call set_constants()
@@ -256,7 +251,7 @@ subroutine cjsmod( nan, &
     if (c_hat <= 0.0D0) then
         call tests(nan, ns, hist, ng, group, c_hat, chisq_vif, i)  ! On return, i is degree of freedom for tests
     else
-        call tests(nan, ns, hist, ng, group, aic, chisq_vif, i)  ! aic is just a dummy placeholder, i is df
+        call tests(nan, ns, hist, ng, group, df_vif, chisq_vif, i)  ! df_vif is just a dummy placeholder, i is df
     end if
     df_vif = i   ! convert to real
 
@@ -321,13 +316,10 @@ subroutine hugginsmodel( &
         capY, &
         p_init, &
         c_init, &
-    ! eliminate these imputs commented out    input_trace, &
         input_link, &
         maxfn, &
         beta_tol_vec, &
         loglik, &
-    !    deviance, &
-    !    aic, &
         parameters, &
         se_param, &
         covariance, &
@@ -340,8 +332,7 @@ subroutine hugginsmodel( &
         n_ci_low, &
         n_ci_high, &
         exit_code, &
-        pos_def_code, &
-     !   df )
+        pos_def_code )
 
 !
 !    Main routine to estimate Huggins closed population Mark-Recapture model.
@@ -358,7 +349,7 @@ subroutine hugginsmodel( &
 
 !    Input parameters
     integer, intent(inout), target :: nan, ns, nx, ny
-    integer, intent(inout) :: algorithm, cov_meth, input_trace, maxfn, input_link
+    integer, intent(inout) :: algorithm, cov_meth, maxfn, input_link
     integer, intent(inout), dimension(nan,ns), target :: hist
     integer, intent(inout), dimension(nx), target :: remove   ! = 1 to remove a capture covar from recapture equation
     double precision, intent(inout), dimension(nan,ns,nx), target :: capX  ! initial capture covars
@@ -369,21 +360,17 @@ subroutine hugginsmodel( &
     
 
 !    Output parameters
-    double precision, intent(inout) :: loglik, deviance, aic
+    double precision, intent(inout) :: loglik
     double precision, intent(inout), dimension(nx+ny) :: parameters, se_param
     double precision, intent(inout), dimension(nx+ny, nx+ny) :: covariance
     double precision, intent(inout), dimension(nan,ns) :: p_hat, se_p_hat, c_hat, se_c_hat
     double precision, intent(inout) :: n_hat, se_n_hat, n_ci_low, n_ci_high
-    integer, intent(inout) :: exit_code, pos_def_code, nhat_v_meth, df
+    integer, intent(inout) :: exit_code, pos_def_code, nhat_v_meth
 
 !    Local parameters
     integer :: i, ioerr
-    !integer :: j, k   ! debugging
     integer, target :: np
-    character(len=10) :: label
     integer, dimension(nan), target :: first
-    character(len=10)  :: date
-    character(len=12) :: time
 
 !    ---- Set maximization parameters in globevars
     link = input_link
@@ -443,10 +430,6 @@ subroutine hugginsmodel( &
             se_param(i) = sqrt( covariance(i,i) )
         end forall
 
-!        ---- Compute model fits (aic, dev, etc.)
-        deviance=-2.0D0 * loglik
-        aic=deviance + 2.0D0*df
-
 !        ---- Calculate probability of initial and subsequent captures, and SE for both
         call huggins_pc_hat(nan,ns,nx,ny,ptr_np,parameters,covariance,p_hat,se_p_hat,c_hat,se_c_hat)
 
@@ -455,8 +438,6 @@ subroutine hugginsmodel( &
     else
 !        ---- Maximization failed
         se_param = -1.0D0
-        deviance = -1.0D0
-        aic = -1.0D0
         p_hat = -1.0D0
         se_p_hat = -1.0D0
         c_hat = -1.0D0
@@ -554,7 +535,6 @@ subroutine CJS_estim(np, algorithm, cov_meth, parameters, loglik, covariance, ex
         ! ---- Hessian and Covariance Section
         if( cov_meth == 1 ) then
 
-!            if( trace /= 0) write(logfile,*) "Calling comp_hessian..."
             ! compute hessian matrix by numeric 2nd derivatives.  Covariance is actually the
             ! Hessian.  I'm just using covarinace as storage here
             call comp_hessian(CJS_loglik, np, parameters, loglik, covariance)
@@ -764,9 +744,6 @@ SUBROUTINE CJS_obj(p,beta,lnlik,grad)
     double precision, intent(inout), dimension(p) :: grad, beta
 
     double precision, external :: CJS_loglik
-
-    !integer :: i   ! debugging var
-
 
 !    Calculate the log-likelihood
     lnlik = -1.0D0 * CJS_loglik(p, beta)
@@ -1191,9 +1168,6 @@ subroutine procap(pij, i, j, coef, nx)
     end if
     
 
-!    if( i <= 2 ) then
-!        write(logfile,*) "  Cap", i, j, ":", (coef(k), "*", ptr_capX(i,j,k), " + ", k=1,nx), "p=", pij
-!    end if
 
 end subroutine
 
@@ -1258,11 +1232,6 @@ subroutine prorecap(cij, i, j, coef, nx, ny, remove)
         cij = -1.
     end if
 
-
-!    if (i==1) then
-!        write(logfile,*) "Recap", i, j, ":", (ptr_capY(i,j,k), k=1,ny), "p=", cij
-!        write(logfile,*) "     nx=", nx, "ny=", ny, "coef=", (coef(k),k=1,nx+ny)
-!    end if
 
 end subroutine
 
@@ -1353,7 +1322,7 @@ double precision function sine_link( eta )
 !   Compute the inverse of the cosine link. 
 !   eta is the linear predictor
 !
-    use nrtype ! for PI_D constant = value of pie.
+
     use constants
     implicit none
     
@@ -1519,7 +1488,7 @@ SUBROUTINE VA09AD(FUNCT,N,X,F,G,H,W,DFN,EPS,MODE,MAXFN,IEXIT)
     implicit none
 
     double precision, intent(inout) :: DFN,F
-    integer, intent(inout) :: IEXIT,IPRINT,MAXFN,MODE, N
+    integer, intent(inout) :: IEXIT,MAXFN,MODE, N
     double precision, intent(inout), dimension(n) :: EPS,G,X
     double precision, intent(inout), dimension(n*(n+1)/2) :: H
     double precision, intent(inout), dimension(3*n) :: W
@@ -2346,7 +2315,7 @@ subroutine ilink_n_se( xbeta, x_vbeta_x, prob, se_prob )
 !   prob = output probability = answer resulting from inverting link
 !   se_prob = output standard error of probability
 !
-    use nrtype
+    use constants
     use globevars
     implicit none
     
@@ -2912,7 +2881,7 @@ implicit none
     end do  ! end Test 3 L loop
 
 
-    ! Print total chi-squared and variance inflation factor
+    ! total chi-squared and variance inflation factor
     IF (IDFGT > 0) THEN
         VIF=CHIGT/IDFGT
         VIF=MAX(VIF,1.0D0)
