@@ -413,7 +413,7 @@ subroutine hugginsmodel( &
 
    
     call Huggins_estim(ptr_np, algorithm, cov_meth, parameters, loglik, covariance, exit_code, &
-        pos_def_code, df, maxfn, beta_tol_vec)
+        pos_def_code, maxfn, beta_tol_vec)
 
     
     
@@ -454,7 +454,7 @@ end subroutine hugginsmodel
 ! ---------------------------------------------------------------------------------------------
 
 subroutine CJS_estim(np, algorithm, cov_meth, parameters, loglik, covariance, exit_code, cov_npd, &
-    df, max_fn, beta_tol_vec )
+    max_fn, beta_tol_vec )
 !
 !    Purporse: to maximize the capture-recapture likelihood
 !
@@ -479,7 +479,7 @@ subroutine CJS_estim(np, algorithm, cov_meth, parameters, loglik, covariance, ex
     use globevars
     implicit none
 
-    integer, intent(inout) :: np, algorithm, exit_code, cov_npd, cov_meth, df
+    integer, intent(inout) :: np, algorithm, exit_code, cov_npd, cov_meth
     integer, intent(inout) :: max_fn  ! upon output, max_fn is the actual number of function evaluations
 
     double precision, intent(inout) :: loglik
@@ -523,7 +523,6 @@ subroutine CJS_estim(np, algorithm, cov_meth, parameters, loglik, covariance, ex
         parameters = 0
         covariance = -1
         cov_npd = 1
-        df = 0
     else
         ! Maximization did converge, compute covariances
 
@@ -579,7 +578,7 @@ end subroutine
 
 ! ---------------------------------------------------------------------------------------------
 
-subroutine Huggins_estim(np, algorithm, cov_meth, parameters, loglik, covariance, exit_code, cov_npd, df, &
+subroutine Huggins_estim(np, algorithm, cov_meth, parameters, loglik, covariance, exit_code, cov_npd, &
     maxfn, beta_tol_vec )
 !
 !    Purporse: to maximize the Huggins closed popln capture-recapture likelihood
@@ -608,7 +607,7 @@ subroutine Huggins_estim(np, algorithm, cov_meth, parameters, loglik, covariance
     use globevars
     implicit none
 
-    integer, intent(inout) :: np, algorithm, exit_code, cov_npd, cov_meth, df, maxfn
+    integer, intent(inout) :: np, algorithm, exit_code, cov_npd, cov_meth, maxfn
 
     double precision, intent(inout) :: loglik
     double precision, intent(inout), dimension(np) :: parameters
@@ -653,7 +652,6 @@ subroutine Huggins_estim(np, algorithm, cov_meth, parameters, loglik, covariance
         parameters = 0
         covariance = -1
         cov_npd = 1
-        df = 0
     else
         ! Maximization did converge, compute covariances
 
@@ -703,8 +701,6 @@ subroutine Huggins_estim(np, algorithm, cov_meth, parameters, loglik, covariance
         !   non-zero SV's.  Later, we invert the hessian and check for non-positive definitness.
         !
         !       cov_npd > 0 if inversion for cov.meth = 2 fails
-        !       df = 1 if we want to estimate number of parameters (the norm)
-        !       df = 0 means don't bother, R sets df to user specified value or np
 
 
         ! ---- Now invert the negative matrix of 2nd derivatives
@@ -1503,7 +1499,7 @@ SUBROUTINE VA09AD(FUNCT,N,X,F,G,H,W,DFN,EPS,MODE,MAXFN,IEXIT)
     double precision :: DC
 
 
-        DC = epsilon( DC(1) )
+        DC = epsilon( DC )
         EPSMCH = DC*10.0D0
         NN = N* (N+1)/2
         IG = N
@@ -1536,7 +1532,6 @@ SUBROUTINE VA09AD(FUNCT,N,X,F,G,H,W,DFN,EPS,MODE,MAXFN,IEXIT)
         IF (DFN.LT.0.0D0) DF = ABS(DF*F)
         IF (DF.LE.0.0D0) DF = 1.0D0
    20   CONTINUE
-   21   CONTINUE
         ITN = ITN + 1
         DO 22 I = 1,N
           W(IG+I) = G(I)
@@ -2697,10 +2692,8 @@ SUBROUTINE TESTS(NAN,NS,IC,NG,IG,VIF,CHIGT,IDFGT)
 !    Note that Bryan Manly and I do these tests slightly differently than RELEASE.
 !    We have different rules about Df and when to pool various tables.
 !
-use constants, only : chat_rot, logfile
+use constants, only : chat_rot
 implicit none
-
-    !integer, parameter :: real_dbl=selected_real_kind(p=13,r=200)
 
     integer, intent(in) :: nan, ns, ng
     INTEGER, intent(in), dimension(nan,ns) :: ic
@@ -2727,7 +2720,7 @@ implicit none
 
 
     CHIGT=0.0
-    IDFGT=0.0
+    IDFGT=0
 
 
     DO L = 1, NG
@@ -2899,7 +2892,7 @@ SUBROUTINE TEST2(NS,M,CHISQ,IDF,CHITOT,IDFTOT,IUSE)
 !
 !     Subroutine to find components 2 to NS-2 of TEST 2 *
 !
-use constants, only : chat_rot, logfile
+use constants, only : chat_rot
 
 implicit none
 
