@@ -264,6 +264,7 @@ dimnames(covariance) <- list( c( paste("cap.",names( capcoef ),sep=""), paste("s
 
 
 # ----- Now that df is computed, recompute fit statistics
+dev <- -2*ans$loglik
 aic <- -2*ans$loglik + 2*df
 qaic <- -2*(ans$loglik/ans$vif) + 2*df
 aicc <- aic + (2*df*(df+1))/(nan - df - 1)
@@ -315,7 +316,7 @@ ans <- list( histories=histories,
     aux=aux, 
     intervals=intervals[1:(ns-1)], 
     loglike=ans$loglik, 
-    deviance=ans$deviance, 
+    deviance=dev, 
     aic=aic, 
     qaic=qaic, 
     aicc=aicc, 
