@@ -3,7 +3,7 @@
 
 import(stats)
 import(graphics)
-importFrom("utils","packageDescription")
+importFrom("utils","packageDescription", "packageVersion")
 
 useDynLib(mra, .registration = TRUE)
 

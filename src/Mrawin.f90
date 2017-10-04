@@ -200,7 +200,7 @@ subroutine cjsmod( nan, &
 
 
 !    Local parameters
-    integer :: i,j, ioerr
+    integer :: i,j
     integer, target :: np
     integer, dimension(nan, ns), target :: idead
     integer, dimension(nan), target :: first, last
@@ -368,7 +368,7 @@ subroutine hugginsmodel( &
     integer, intent(inout) :: exit_code, pos_def_code, nhat_v_meth
 
 !    Local parameters
-    integer :: i, ioerr
+    integer :: i
     integer, target :: np
     integer, dimension(nan), target :: first
 
@@ -794,6 +794,11 @@ double precision function CJS_loglik(p, beta)
     cap_beta = beta(1:ptr_nx)
     surv_beta = beta( (ptr_nx+1):p )
 
+    ! initialize init1 and init2 to kill uninitialized warning at compile
+    ! Assuming first(i) >= 0, these values are always overwritten in do loop below.
+    init1 = 1
+    init2 = 1
+    
     xlnlik=0.0D0
     do i=1,ptr_nan
 
@@ -1197,7 +1202,7 @@ subroutine prorecap(cij, i, j, coef, nx, ny, remove)
     integer, intent(in), dimension(nx) :: remove
 
     double precision, external :: logit_link, sine_link, hazard_link
-    double precision :: sum, z
+    double precision :: sum
     integer :: k
 
     sum = 0.0D0
@@ -1257,7 +1262,7 @@ subroutine prosur(sij, i, j, coef, ny)
     double precision, intent(out) :: sij
 
     double precision, external :: logit_link, sine_link, hazard_link
-    double precision :: sum, z
+    double precision :: sum
     integer :: k
 
     sum = 0.0D0
@@ -1498,7 +1503,7 @@ SUBROUTINE VA09AD(FUNCT,N,X,F,G,H,W,DFN,EPS,MODE,MAXFN,IEXIT)
     double precision :: ZeroD = 0.0
     double precision :: DC
 
-
+        Z = 0 
         DC = epsilon( DC )
         EPSMCH = DC*10.0D0
         NN = N* (N+1)/2
@@ -2915,7 +2920,7 @@ implicit none
         DO I=2,NS-2
             IUSE(I)=0
             CHISQ(I)=0.0
-            IDF(I)=0.0
+            IDF(I)=0
         end do
         RETURN
     END IF
