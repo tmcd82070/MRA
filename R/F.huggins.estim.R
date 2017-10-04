@@ -246,6 +246,7 @@ dimnames(covariance) <- list( nms, nms )
 
 
 # ----- Now that df is computed, recompute fit statistics
+dev <- -2*ans$loglik
 aic <- -2*ans$loglik + 2*df
 n.eff <- nan * ns
 aicc <- aic + (2*df*(df+1))/(n.eff - df - 1)
@@ -268,7 +269,7 @@ ex.time <- (proc.time()[3] - start.sec) / 60
 ans <- list( histories=histories, 
     aux=aux, 
     loglike=ans$loglik, 
-    deviance=-2.0*ans$loglik, 
+    deviance=dev, 
     aic=aic, 
     aicc=aicc, 
     capcoef=capcoef, 
