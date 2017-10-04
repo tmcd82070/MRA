@@ -145,7 +145,7 @@ ans$se.param[ ans$se.param < 0 ] <- NA
 
 # ----- R does not preserve the matrix structures in .Fortran call.  Put matricies, 
 #   which are now vectors, back to matricies.
-ans$covariance <- matrix( ans$covariance, nrow=nx+ny ) 
+covariance     <- matrix( ans$covariance, nrow=nx+ny ) 
 ans$p.hat      <- matrix( ans$p.hat, nrow=nan )
 ans$se.p.hat   <- matrix( ans$se.p.hat, nrow=nan )
 ans$c.hat      <- matrix( ans$c.hat, nrow=nan )
@@ -277,7 +277,7 @@ ans <- list( histories=histories,
     recapcoef=recapcoef, 
     se.recapcoef=se.recapcoef,
     remove=remove,
-    covariance=ans$covariance,
+    covariance=covariance,
     p.hat=ans$p.hat, 
     se.p.hat=ans$se.p.hat, 
     c.hat=ans$c.hat, 

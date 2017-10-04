@@ -7,8 +7,8 @@ archive/
 HSL.library
 testingversion
 mra.rcheck
-src-i386
-src-x64
+src-i386/
+src-x64/
 *.tar.gz
 *.mod
 *.o

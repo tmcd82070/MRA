@@ -18,4 +18,6 @@ Description: Accomplishes mark-recapture analysis with covariates. Models availa
 	Link functions include logit, sine, and hazard.  Model selection, model averaging, plot, and simulation routines included. Open population size by the Horvitz-Thompson (1959) <doi:10.2307/2280784> estimator.
 License: GNU General Public License
 BugReports: https://github.com/tmcd82070/MRA/issues
+Suggests: knitr
+VignetteBuilder: knitr
 Imports: stats, graphics

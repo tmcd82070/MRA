@@ -5,7 +5,7 @@
 !	S and R to do Capture-recapture analysis.  
 !
 
-!   --------------------------
+!   -----------------------
 module constants
 !
 !    Constants used in the program

@@ -9,7 +9,7 @@ src-x64
 .Rbuildignore
 mra.rproj
 Spatialtm
-archive
+Archive
 HSL.library
 testingversion
 .gitignore
