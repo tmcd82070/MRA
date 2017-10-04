@@ -6,7 +6,7 @@ Date: 2017-10-02
 Authors@R: c(
   person("Trent", "McDonald", email="tmcdonald@west-inc.com", role=c("cre","aut")), 
   person("Eric", "Regehr", email="eric_regehr@fws.gov", role=c("ctb")), 
-  person("Bryan", "Manly", email="bmanly@west-inc.com", role=c("ctb")), 
+  person("Bryan", "Manly", email="BryanManly@xtra.co.nz", role=c("ctb")), 
   person("Jeff", "Bromaghin", email="jbromaghin@usgs.gov", role=c("ctb"))
   )
 Author: Trent McDonald [cre, aut],
