@@ -1,33 +1,45 @@
 ## Resubmission comments
-* Fixed Fortran bound error from previous version. 
+
+*Comment: -> So apparently Bryan Manly is at least authors if not also copyright holder here? Why is his name not mention in the Authors@R field?*
+
+* Added Bryan Manly to contributors list 
+* Bryan Manly does not hold copyright on any routines used here.  Little of Bryan's work remains.  In addition, Bryan worked for the same company as the maintainer (Trent McDonald) when developing the routines, and this company released the code in approximately 2005.  
+
+*Comment: Is anything from Numerical recipes still included? If so you probably must not use GPL and must not diestribute the package given the Numerical Recipes license?*
+
+* This comment was very old.  
+* No Numerical Recipies code is included in the current package. 
+
 
 ## Current Version
-2.16.4
-Previous submissions: 2.16.1, 2.16.3
+2.16.10
+Previous submissions: 2.16.9
 
 ## Test environments
-* local Windows 7 Pro, R 3.1.3
+* local Windows 10 Pro (Version	10.0.15063 Build 15063), R 3.4.2
 * Linix - Ubuntu (via Travis)
-* passes devtools::build_win()
+* passes devtools::build_win() with the following note:
 
-## R CMD check results
-No ERRORs or WARNINGs. 
+*checking CRAN incoming feasibility ... NOTE
+Maintainer: 'Trent McDonald <tmcdonald@west-inc.com>'
 
-One NOTE: 
-  Maintainer: 'Trent McDonald <tmcdonald@west-inc.com>'
-  New submission
-  Package was archived on CRAN
-  CRAN repository db overrides:
-    X-CRAN-Comment: Archived on 2015-03-03 as misuse of \donttest was not
-      corrected.
-      
-  Response: \donttest has been removed from all examples 
+New submission
 
-Bound checking was on during R CMD check.  FFLAGS in Makeconf were
-   -O3 -mtune=core2 -fbounds-check
+Package was archived on CRAN
 
-Examples run in ~ 5 seconds on my laptop. 
+Possibly mis-spelled words in DESCRIPTION:
+  Horvitz (18:153)
+  Huggin's (17:248)
+  Seber (17:111, 17:208)
+  covariates (17:56)
+  logit (18:25)
 
+CRAN repository db overrides:
+  X-CRAN-Comment: Archived on 2017-04-24 as check errors were not
+    corrected despite reminders.*
+
+## R CMD check --as-cran results
+No ERRORs or WARNINGs.  Same note as above. 
 
 ## Downstream dependencies
 None known
