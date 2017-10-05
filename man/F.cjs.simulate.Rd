@@ -11,7 +11,7 @@ follow open Cormack-Jolly-Seber (CJS) models.  A super-population
 approach is taken wherein individuals with unique capture and survival 
 probabilities are randomly 'born' into the 
 realized population and captured. Any CJS model, including those with 
-heterogeniety, can be 
+heterogeneous survial or capture probabilities, can be 
 simulated.  Closed populations can also be simulated.   
 }
 
@@ -89,16 +89,16 @@ F.cjs.simulate(super.p, super.s, fit, N1 = 1000,
         to 0.25, and another group with capture probability equal to 0.75 can be simulated using 
         \itemize{ \item F.cjs.simulate( rbind( rep(0.25,10),rep(0.75,10) ), rep(s,9) ). },
         where \code{s} is some survival probability between 0 and 1. If \code{s} = 1, a 
-        closed (no births or deaths) two-group heterogeniety model is simulated.  In this example, the 
+        closed (no births or deaths) two-group heterogeneous model is simulated.  In this example, the 
         realized population is sampled for 10 occasions. 
         
-        Non-equal sized hetergeneity groups can be simulated using        
+        Non-equal sized heterogeneous groups can be simulated using        
         \itemize{ \item F.cjs.simulate( rbind( matrix(0.25,1,10),matrix(0.75,9,10) ), rep(1,9) ). }
         Using this call, approximately 10\% of individuals in the realized population will have capture probabilities 
         equal to 0.25, while 90\% will have capture probabilities equal to 0.75. Additional 
         groups can be included by including more rows with distinct probabilities in \code{super.p}.
         
-        A population with capture heterogeniety proportional to a vector \code{w} can be simulated using 
+        A population with heterogeneous capture probabilities proportional to a vector \code{w} can be simulated using 
         \itemize{ \item F.cjs.simulate( matrix( w/sum(x), length(w), 10), rep(s,9) ) }.  
     
         A stochastic population that varies around a specified size of \code{N1} = 1000

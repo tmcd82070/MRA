@@ -74,11 +74,11 @@ F.fit.table( fits=ls(pattern="^fit"), rank.by= "qaicc", plausible.p=0.01 )
   \item{qaicc.wgt}{QAICc model weights.  These weights equal exp(-.5*(delta.qaicc)), scaled to sum to 1.0,}
   \item{plausible}{Indicates `plausible' models as defined by Bromaghin et al. (2013).  The value 
     in this column is TRUE if the model has \code{rank.by} weight greater than \code{plausible.p} OR if 
-    the model's log-likelihood is greater than the minimum log likelihood amoungst those that 
+    the model's log-likelihood is greater than the minimum log likelihood amongst those that 
     have \code{rank.by} weight greater than \code{plausible.p}. The second condition in this scheme includes a model structure as 'plausible' 
     when its log-likelihood is relatively high but it has been heavily penalized by the number of parameters.  When 
     the likelihood is parameterized to contain two or more linear models, this second condition is a reasonable 
-    criterion when model selection is done in a step-wise fashion on each model separately (see Bromaghen et al., 2013). 
+    criterion when model selection is done in a step-wise fashion on each model separately (see Bromaghin et al., 2013). 
     }
 
 }
