@@ -21,3 +21,4 @@ BugReports: https://github.com/tmcd82070/MRA/issues
 Suggests: knitr
 VignetteBuilder: knitr
 Imports: stats, graphics
+RoxygenNote: 6.0.1
