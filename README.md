@@ -1,7 +1,13 @@
-# MRA
-Capture-recapture R package
+# MRA - Mark Recapture Analysis
 
-Description: This package facilitates analysis of mark-recapture data using covariates. 
+[![CRAN Version](http://www.r-pkg.org/badges/version/mra)](http://www.r-pkg.org/pkg/mra)
+[![CRAN Downloads](http://cranlogs.r-pkg.org/badges/mra)](http://cran.rstudio.com/web/packages/mra/index.html)
+
+## A capture-recapture R package.
+
+##Description: 
+
+This package analyzes both open and closed population mark-recapture data using covariates. 
   Supported models include: Cormack-Jolly-Seber (CJS) open population; Huggin's closed population. 
   Link functions include: logit, sine, hazard.  
   Model selection and model averaging routines included. 
