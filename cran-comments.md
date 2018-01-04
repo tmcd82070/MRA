@@ -46,7 +46,10 @@ Previous submissions: 2.16.10
 
 ## Test environments
 * local Windows 10 Pro (Version	10.0.15063 Build 15063), R 3.4.2
-* Linix - Ubuntu (via Travis)
+* Linux - Ubuntu (via Travis)
+
+## devtools::build_win()
+
 * passes devtools::build_win() with the following note:
 
 `
